@@ -7,6 +7,7 @@ package uk.ac.ljmu.cmp.obrien;
 
 import java.util.ArrayList;
 import javax.swing.JFrame;
+import javax.swing.JSplitPane;
 
 /**
  *
@@ -24,8 +25,15 @@ public class AccountingApp {
         dao.retrieveClients(clientList);
         System.out.println(clientList.size());
         
+        final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        
         ClientPanel cp = new ClientPanel(clientList);
-        frame.getContentPane().add(cp);
+        ServicePanel sp = new ServicePanel();
+        splitPane.add(cp);
+        splitPane.add(sp);
+        splitPane.setDividerLocation(0.3);
+        
+        frame.getContentPane().add(splitPane);
         
         frame.pack();
         frame.setVisible(true);
