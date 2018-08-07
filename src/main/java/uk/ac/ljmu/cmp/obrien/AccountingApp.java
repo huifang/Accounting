@@ -23,12 +23,15 @@ public class AccountingApp {
         DataDAO dao = new DataDAO("jdbc:mysql://localhost:3306","root","12345");
         ArrayList<Client> clientList = new ArrayList<>();
         dao.retrieveClients(clientList);
-        System.out.println(clientList.size());
+        //System.out.println(clientList.size());
+        
+        ArrayList<AccountService> serviceList = new ArrayList<>();
+        dao.retrieveServices(serviceList);
         
         final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         
         ClientPanel cp = new ClientPanel(clientList);
-        ServicePanel sp = new ServicePanel();
+        ServicePanel sp = new ServicePanel(serviceList);
         splitPane.add(cp);
         splitPane.add(sp);
         splitPane.setDividerLocation(0.3);
