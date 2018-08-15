@@ -26,11 +26,11 @@ public class DataDAO {
         }
     }
     
-    public void retrieveClients(ArrayList<Client> clientList)
+    public void retrieveClients(ArrayList<AccountClient> clientList)
     {
         Statement st = null;
         ResultSet rs = null;
-        String query = "SELECT clientid, agencyID, cname "
+        String query = "SELECT agencyID, cname "
                 + "from obriensmanagement.clients;";
         
         try {
@@ -38,10 +38,9 @@ public class DataDAO {
             rs = st.executeQuery(query);
             
             while(rs.next()) {
-                int tmpID = rs.getInt(1);
-                String tmpAgencyID = rs.getString(2);
-                String tmpname = rs.getString(3);
-                Client tmpClient = new Client(tmpID, tmpAgencyID, tmpname);
+                String tmpAgencyID = rs.getString(1);
+                String tmpname = rs.getString(2);
+                AccountClient tmpClient = new AccountClient(tmpAgencyID, tmpname);
                 clientList.add(tmpClient);
             }
             
@@ -50,19 +49,19 @@ public class DataDAO {
         }
     }
     
-    public void retrieveServices(ArrayList<AccountService> serviceList)
+    public void retrieveSelectedServices(ArrayList<AccountService> serviceList, String clientID)
     {
         Statement st = null;
         ResultSet rs = null;
-        String query = "SELECT serviceid, clientid, periodend, stype, samount, vatamount, servicefee, paidamount "
-                + "from obriensmanagement.services;";
+        String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount "
+                + "from obriensmanagement.services where services.clientID = " + clientID;
         
         try {
             st = con.createStatement();
             rs = st.executeQuery(query);
             
             while(rs.next()) {
-                String tmpsID = rs.getString(1);
+                int tmpsID = rs.getInt(1);
                 String tmpcID = rs.getString(2);
                 Date tmpPE = new Date(rs.getDate(3).getTime());
                 char tmpStype = rs.getString(4).charAt(0);
@@ -76,7 +75,37 @@ public class DataDAO {
             }
             
         } catch (SQLException ex) {
-             System.out.println("Cannot retrieve Client data!");
+             System.out.println("Cannot retrieve Service data!");
+        }
+    }
+    
+    public void retrieveServices(ArrayList<AccountService> serviceList)
+    {
+        Statement st = null;
+        ResultSet rs = null;
+        String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount "
+                + "from obriensmanagement.services;";
+        
+        try {
+            st = con.createStatement();
+            rs = st.executeQuery(query);
+            
+            while(rs.next()) {
+                int tmpsID = rs.getInt(1);
+                String tmpcID = rs.getString(2);
+                Date tmpPE = new Date(rs.getDate(3).getTime());
+                char tmpStype = rs.getString(4).charAt(0);
+                double tmpsAmount = rs.getDouble(5);
+                double tmpvAmount = rs.getDouble(6);
+                double tmpsFee = rs.getDouble(7);
+                double tmppAmount = rs.getDouble(8);
+                
+                AccountService tmpService = new AccountService(tmpsID, tmpcID, tmpPE, tmpStype,tmpsAmount, tmpsAmount,tmpsFee, tmppAmount);
+                serviceList.add(tmpService);
+            }
+            
+        } catch (SQLException ex) {
+             System.out.println("Cannot retrieve Service data!");
         }
     }
 }

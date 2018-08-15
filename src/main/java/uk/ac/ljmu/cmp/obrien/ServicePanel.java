@@ -14,9 +14,9 @@ import javax.swing.JTable;
 public class ServicePanel extends JPanel{
     
     ArrayList<AccountService> serviceList;
-    //ServiceButtonPanel sbp;
+    ServiceButtonPanel sbp;
     JTable serviceTable;
-    //ServiceTableModel stm;
+    ServiceTableModel stm;
     JScrollPane tableContainer;
     
     //will be deleted later
@@ -28,14 +28,14 @@ public class ServicePanel extends JPanel{
     ServicePanel(ArrayList<AccountService> sList)
     {
         this.serviceList = sList;
-        //stm = new ClientTableModel(cList);
+        stm = new ServiceTableModel(sList);
         
-        //sbp = new ClientButtonPanel();
-        serviceTable = new JTable();
+        sbp = new ServiceButtonPanel();
+        serviceTable = new JTable(stm);
         tableContainer = new JScrollPane(serviceTable);
         
         this.setLayout(new BorderLayout());
         this.add(tableContainer, BorderLayout.CENTER);
-        //this.add(sbp, BorderLayout.NORTH);
+        this.add(sbp, BorderLayout.NORTH);
     }
 }

@@ -10,20 +10,18 @@ import javax.swing.table.AbstractTableModel;
  */
 public class ClientTableModel extends AbstractTableModel {
 
-    private ArrayList<Client> clientList;
+    private ArrayList<AccountClient> clientList;
     
     private final String[] columnNames = {
-        "ClientID",
         "AgencyID",
         "CompanyName"
     };
     
     private final Class[] columns = new Class[] {
-        Integer.class,
         String.class,
         String.class};
     
-    public ClientTableModel(ArrayList<Client> clientList)
+    public ClientTableModel(ArrayList<AccountClient> clientList)
     {
         this.clientList = clientList;
     }
@@ -49,12 +47,9 @@ public class ClientTableModel extends AbstractTableModel {
        
         switch (columnIndex) {
             case 0:
-                retObject = clientList.get(rowIndex).getClientID();
-                break;
-            case 1:
                 retObject = clientList.get(rowIndex).getAgencyID();
                 break;
-            case 2: 
+            case 1: 
                 retObject = clientList.get(rowIndex).getCname();
                 break;
         }

@@ -7,9 +7,8 @@ import java.util.Date;
  *
  * @author cmphfang
  */
-public class Client {
+public class AccountClient {
     
-    private int clientid;
     private String agencyid;
     private String cname;
     private String ename;
@@ -22,16 +21,10 @@ public class Client {
     private boolean active;
     private String taxno;
     
-    Client(int clientid, String agencyid, String cname)
+    AccountClient(String agencyid, String cname)
     {
-        this.clientid = clientid;
         this.agencyid = agencyid;
         this.cname = cname;
-    }
-    
-    public int getClientID()
-    {
-        return this.clientid;
     }
     
     public String getAgencyID()

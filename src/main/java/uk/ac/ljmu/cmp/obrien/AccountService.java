@@ -9,7 +9,7 @@ import java.util.Date;
  */
 public class AccountService {
     private String clientId;
-    private String serviceId;
+    private int serviceId;
     private Date periodEnd;
     private char serviceType;
     private double salesAmount;
@@ -17,7 +17,7 @@ public class AccountService {
     private double serviceFee;
     private double paidAmount;
     
-    AccountService(String sId, String cId, Date pE, char type,
+    AccountService(int sId, String cId, Date pE, char type,
             double sAmount, double vAmount, double sFee, double pAmount)
     {
         this.serviceId = sId;
@@ -30,12 +30,12 @@ public class AccountService {
         this.paidAmount = pAmount;
     }
     
-    public void setServiceId(String sId)
+    public void setServiceId(int sId)
     {
         this.serviceId = sId;
     }
     
-    public String getServiceId()
+    public int getServiceId()
     {
         return this.serviceId;
     }
@@ -50,6 +50,16 @@ public class AccountService {
         return this.clientId;
     }
     
+    public void setPeriodEnd(Date periodDate)
+    {
+        this.periodEnd = periodDate;
+    }
+    
+    public Date getPeriedDate()
+    {
+        return this.periodEnd;
+    }
+    
     public void setServiceType(char sType)
     {
         this.serviceType = sType;
@@ -58,6 +68,26 @@ public class AccountService {
     public char getServiceType()
     {
         return this.serviceType;
+    }
+    
+     public void setSalesAmount(double sAmount)
+    {
+        this.salesAmount = sAmount;
+    }
+    
+    public double getSalesAmount()
+    {
+        return this.salesAmount;
+    }
+    
+     public void setVATAmount(double vatAmount)
+    {
+        this.vatAmount = vatAmount;
+    }
+    
+    public double getVATAmount()
+    {
+        return this.vatAmount;
     }
     
     public void setServiceFee(double sFee)

@@ -21,7 +21,7 @@ public class AccountingApp {
         
         //get database connection and load data
         DataDAO dao = new DataDAO("jdbc:mysql://localhost:3306","root","12345");
-        ArrayList<Client> clientList = new ArrayList<>();
+        ArrayList<AccountClient> clientList = new ArrayList<>();
         dao.retrieveClients(clientList);
         //System.out.println(clientList.size());
         
@@ -37,7 +37,6 @@ public class AccountingApp {
         splitPane.setDividerLocation(0.3);
         
         frame.getContentPane().add(splitPane);
-        
         frame.pack();
         frame.setVisible(true);
     }
