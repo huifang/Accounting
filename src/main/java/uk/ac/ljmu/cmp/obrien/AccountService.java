@@ -16,6 +16,14 @@ public class AccountService {
     private double vatAmount;
     private double serviceFee;
     private double paidAmount;
+    private Date agentNoticeDate;
+    
+    AccountService(int sId, String cId, Date pE)
+    {
+        this.serviceId = sId;
+        this.clientId = cId;
+        this.periodEnd = pE;
+    }
     
     AccountService(int sId, String cId, Date pE, char type,
             double sAmount, double vAmount, double sFee, double pAmount)
@@ -109,4 +117,16 @@ public class AccountService {
     {
         return this.paidAmount;
     }
+    
+        
+    public void setAgentNoticeDate(Date adate)
+    {
+        this.agentNoticeDate = adate;
+    }
+    
+    public Date getAgentNoticeDate()
+    {
+        return this.agentNoticeDate;
+    }
+    
 }

@@ -11,9 +11,9 @@ import javax.swing.table.AbstractTableModel;
  *
  * @author cmphfang
  */
-public class ServiceTableModel extends AbstractTableModel {
-
-    private ArrayList<AccountService> serviceList;
+class ShortServiceTableModel extends AbstractTableModel {
+    
+    private ArrayList<AccountService> selServiceList;
     
     private final String[] columnNames = {
         "ServiceID",
@@ -21,9 +21,6 @@ public class ServiceTableModel extends AbstractTableModel {
         "Type",
         "PeriodEnd",
         "SalesAmount",
-        "VATAmount",
-        "ServiceFee",
-        "PaidAmount"
     };
     
     private final Class[] columns = new Class[] {
@@ -32,19 +29,16 @@ public class ServiceTableModel extends AbstractTableModel {
         String.class,
         String.class,
         Double.class,
-        Double.class,
-        Double.class,
-        Double.class
     };
     
-    public ServiceTableModel(ArrayList<AccountService> serviceList)
+    public ShortServiceTableModel(ArrayList<AccountService> serviceList)
     {
-        this.serviceList = serviceList;
+        this.selServiceList = serviceList;
     }
     
     @Override
     public int getRowCount() {
-        return serviceList.size();
+        return selServiceList.size();
     }
 
     @Override
@@ -64,31 +58,20 @@ public class ServiceTableModel extends AbstractTableModel {
        
         switch (columnIndex) {
             case 0:
-                retObject = serviceList.get(rowIndex).getServiceId();
+                retObject = selServiceList.get(rowIndex).getServiceId();
                 break;
             case 1:
-                retObject = serviceList.get(rowIndex).getClientId();
+                retObject = selServiceList.get(rowIndex).getClientId();
                 break;
             case 2: 
-                retObject = serviceList.get(rowIndex).getServiceType();
+                retObject = selServiceList.get(rowIndex).getServiceType();
                 break;
             case 3:
-                retObject = dateFormat.format(serviceList.get(rowIndex).getPeriedDate());
-                System.out.println(retObject);
+                retObject = dateFormat.format(selServiceList.get(rowIndex).getPeriedDate());
                 break;
             case 4:
-                retObject = serviceList.get(rowIndex).getSalesAmount();
-                break;
-            case 5:
-                retObject = serviceList.get(rowIndex).getVATAmount();
-                break;
-            case 6:
-                retObject = serviceList.get(rowIndex).getServiceFee();
-                break;
-            case 7:
-                retObject = serviceList.get(rowIndex).getPaidAmount();
-                break;
-                
+                retObject = selServiceList.get(rowIndex).getSalesAmount();
+                break;                
         }
         
         return retObject;

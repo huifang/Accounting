@@ -54,7 +54,9 @@ public class DataDAO {
         Statement st = null;
         ResultSet rs = null;
         String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount "
-                + "from obriensmanagement.services where services.clientID = " + clientID;
+                + "from obriensmanagement.services where services.clientID = \"" + clientID +"\";";
+        //System.out.println(query);
+        serviceList.clear();
         
         try {
             st = con.createStatement();
@@ -70,7 +72,7 @@ public class DataDAO {
                 double tmpsFee = rs.getDouble(7);
                 double tmppAmount = rs.getDouble(8);
                 
-                AccountService tmpService = new AccountService(tmpsID, tmpcID, tmpPE, tmpStype,tmpsAmount, tmpsAmount,tmpsFee, tmppAmount);
+                AccountService tmpService = new AccountService(tmpsID, tmpcID, tmpPE, tmpStype,tmpsAmount, tmpvAmount,tmpsFee, tmppAmount);
                 serviceList.add(tmpService);
             }
             

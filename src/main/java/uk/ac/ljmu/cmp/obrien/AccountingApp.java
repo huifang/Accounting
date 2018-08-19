@@ -19,7 +19,7 @@ public class AccountingApp {
     {
         JFrame frame = new JFrame("Obrien Clients Management");
         
-        //get database connection and load data
+        /*
         DataDAO dao = new DataDAO("jdbc:mysql://localhost:3306","root","12345");
         ArrayList<AccountClient> clientList = new ArrayList<>();
         dao.retrieveClients(clientList);
@@ -36,7 +36,10 @@ public class AccountingApp {
         splitPane.add(sp);
         splitPane.setDividerLocation(0.3);
         
-        frame.getContentPane().add(splitPane);
+        frame.getContentPane().add(splitPane);*/
+        MainPanel mp = new MainPanel();
+        frame.getContentPane().add(mp);
+        
         frame.pack();
         frame.setVisible(true);
     }
