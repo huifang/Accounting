@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.apisupport.project</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/nb-module-project/3">
+            <code-name-base>org.obrien.jdbcwrapper</code-name-base>
+            <suite-component/>
+            <module-dependencies/>
+            <public-packages>
+                <package>com.mysql.cj</package>
+                <package>com.mysql.cj.admin</package>
+                <package>com.mysql.cj.conf</package>
+                <package>com.mysql.cj.conf.url</package>
+                <package>com.mysql.cj.exceptions</package>
+                <package>com.mysql.cj.interceptors</package>
+                <package>com.mysql.cj.jdbc</package>
+                <package>com.mysql.cj.jdbc.admin</package>
+                <package>com.mysql.cj.jdbc.exceptions</package>
+                <package>com.mysql.cj.jdbc.ha</package>
+                <package>com.mysql.cj.jdbc.integration.c3p0</package>
+                <package>com.mysql.cj.jdbc.integration.jboss</package>
+                <package>com.mysql.cj.jdbc.interceptors</package>
+                <package>com.mysql.cj.jdbc.jmx</package>
+                <package>com.mysql.cj.jdbc.result</package>
+                <package>com.mysql.cj.jdbc.util</package>
+                <package>com.mysql.cj.log</package>
+                <package>com.mysql.cj.protocol</package>
+                <package>com.mysql.cj.protocol.a</package>
+                <package>com.mysql.cj.protocol.a.authentication</package>
+                <package>com.mysql.cj.protocol.a.result</package>
+                <package>com.mysql.cj.protocol.result</package>
+                <package>com.mysql.cj.protocol.x</package>
+                <package>com.mysql.cj.result</package>
+                <package>com.mysql.cj.util</package>
+                <package>com.mysql.cj.x.protobuf</package>
+                <package>com.mysql.cj.xdevapi</package>
+                <package>com.mysql.jdbc</package>
+            </public-packages>
+            <class-path-extension>
+                <runtime-relative-path>ext/mysql-connector-java-8.0.12.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/mysql-connector-java-8.0.12.jar</binary-origin>
+            </class-path-extension>
+        </data>
+    </configuration>
+</project>
