@@ -11,6 +11,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -38,7 +42,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 public class MainPanel extends JPanel{
     
     final JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    final JSplitPane clientSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+    final JSplitPane clientSplitPane;
     //final JSplitPane serviceSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     
     //two popup menu for inserting tax info and update service info
@@ -91,12 +95,14 @@ public class MainPanel extends JPanel{
         dao.retrieveServices(serviceList);
         
         //build up the client table
+        //System.out.println(clientList.size());
         ctm = new ClientTableModel(clientList);
         clientTable = new JTable(ctm);
         clientTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         clientTable.requestFocus();
         clientTable.changeSelection(0, 0, false, false);
         selClientID = clientList.get(0).getAgencyID();
+        //System.out.println(selClientID);
         clientTableContainer = new JScrollPane(clientTable);
         JPanel cPanel = new JPanel();
         cPanel.setLayout(new BorderLayout());
@@ -121,7 +127,7 @@ public class MainPanel extends JPanel{
                     HSSFWorkbook wb = new HSSFWorkbook(fileStream);
                     HSSFSheet sheet = wb.getSheetAt(0);
                     HSSFCell cell;
-                    cell = sheet.getRow(1).getCell(1);
+                    //cell = sheet.getRow(1).getCell(1);
                     cell = sheet.getRow(1).getCell(2);
                     String chWords = cell.getStringCellValue();
                     System.out.println(chWords);
@@ -141,6 +147,17 @@ public class MainPanel extends JPanel{
                 ClientRegPanel p = new ClientRegPanel();
                 int click = JOptionPane.showConfirmDialog(null, p, "Input Client", JOptionPane.OK_CANCEL_OPTION);
                 if(click == JOptionPane.OK_OPTION) {
+                    //here we have all the 8 attributes
+                    String agencyID = p.cNoBox.getText();
+                    String ccName = p.cNameCBox.getText();
+                    String ecName = p.cNameEBox.getText();
+                    String address = p.cAddressBox.getText();
+                    String repName = p.repNameBox.getText();
+                    String email = p.contactEmailBox.getText();
+                    String tel = p.telBox.getText();
+                    //the last is conversion from text to Birtheday
+                    
+                    
                     AccountClient c = new AccountClient(p.cNoBox.getText(), p.cNameCBox.getText());
                     dao.insertNewClient(c);
                     clientList.clear();
@@ -354,6 +371,80 @@ public class MainPanel extends JPanel{
             }
         });
         
+        sBatchCreation.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Map serviceMonth = new HashMap<String, Date>();
+                ArrayList<String> serviceIDAll = new ArrayList<>();
+                ArrayList<String> newServiceID = new ArrayList<>();
+                
+                dao.retrieveLatestReturnDate(serviceMonth);
+                dao.retrieveAllServiceID(serviceIDAll);
+                
+                int curYear = Calendar.getInstance().get(Calendar.YEAR);
+                int curMonth = Calendar.getInstance().get(Calendar.MONTH);
+                int cmpYear;
+                int cmpMonth;
+                
+                //System.out.println(String.valueOf(curYear)+String.valueOf(curMonth));
+                //System.out.println(serviceIDAll.size());
+                for(Object name: serviceMonth.keySet())
+                {
+                    String key = name.toString();
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime((Date)serviceMonth.get(key));
+                    cmpYear = cal.get(Calendar.YEAR);
+                    cmpMonth = cal.get(Calendar.MONTH);
+                    
+                    boolean createFlag;
+                    /*if(cmpMonth>curMonth)
+                    {
+                        createFlag = ((cmpMonth-curMonth) % 3 == 0);
+                    }
+                    else
+                    {
+                        createFlag = ((curMonth-cmpMonth) % 3 == 0);
+                    }*/   
+                    if(cmpYear==curYear)
+                    {
+                        createFlag = ((curMonth-cmpMonth) == 3);
+                    }
+                    else
+                    {
+                        createFlag = ((curMonth+12-cmpMonth) == 3);
+                    }
+                    
+                    if(createFlag)
+                    {
+                        String monthString;
+                        //generate new return service id
+                        if(curMonth+1<10)
+                        {
+                            monthString = "0" + String.valueOf(curMonth+1);
+                        }
+                        else
+                        {
+                            monthString = String.valueOf(curMonth+1);
+                        }
+                        String newID = "R" + String.valueOf(curYear) + monthString + "01" + key;
+                        //System.out.println(newID);
+                        newServiceID.add(newID);
+                    }
+                    //System.out.println(key + "Month" + cal.get(Calendar.YEAR));
+                }
+                
+                dao.insertBatchServices(newServiceID);
+                
+                
+                //after insertion, retrieve all the services into the table again.
+                dao.retrieveServices(serviceList);
+                dao.retrieveSelectedServices(selServiceList, selClientID);
+                sstm.fireTableDataChanged();
+                stm.fireTableDataChanged();
+                //System.out.println(newServiceID.size());
+            }
+        });
+                
         sHighlight.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -433,15 +524,14 @@ public class MainPanel extends JPanel{
             }
         });
         
-        clientSplitPane.add(cPanel);
-        clientSplitPane.add(ssPanel);
-        clientSplitPane.setDividerLocation(0.7);
+        clientSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, cPanel, ssPanel);
+        clientSplitPane.setResizeWeight(0.6);
         
         mainSplitPane.add(clientSplitPane);
         mainSplitPane.add(sPanel);
         //mainSplitPane.getRightComponent().setLayout(new BorderLayout());
         //mainSplitPane.getRightComponent().add(serviceTable.getTableHeader(), BorderLayout.PAGE_START);
-        mainSplitPane.setDividerLocation(0.4);
+        mainSplitPane.setDividerLocation(0.3);
         
         this.setLayout(new BorderLayout());
         this.add(mainSplitPane, BorderLayout.CENTER);

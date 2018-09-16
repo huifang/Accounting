@@ -7,8 +7,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -77,7 +81,56 @@ public class DataDAO {
         System.out.println("This needs to be implemented to retrieve client details");
     }
     
-      public void retrieveServices(ArrayList<AccountService> serviceList)
+    public void retrieveLatestReturnDate(Map returnMap) {
+        Statement st = null;
+        ResultSet rs = null;
+        String query = "SELECT agencyID, latestreturn "
+                + "from obriensmanagement.clients;";
+        
+        try {
+            getConnection();
+            st = con.createStatement();
+            rs = st.executeQuery(query);
+            
+            while(rs.next()) {
+                String tmpcID;
+                Date tmpDate;
+                if (rs.getDate(2)!=null)
+                {
+                    tmpcID = rs.getString(1);
+                    tmpDate = new Date(rs.getDate(2).getTime());
+                    returnMap.put(tmpcID, tmpDate);
+                }
+            }
+            
+            con.close();
+        } catch (SQLException ex) {
+             System.out.println("Cannot retrieve Client data!");
+        }
+    }
+     
+    void retrieveAllServiceID(ArrayList<String> serviceIDAll) {
+        Statement st;
+        ResultSet rs;
+        String query = "SELECT serviceID from obriensmanagement.services;";
+        
+        try {
+            getConnection();
+            st = con.createStatement();
+            rs = st.executeQuery(query);
+            
+            while(rs.next()) {
+                String tmpsID = rs.getString(1);
+                serviceIDAll.add(tmpsID);
+            }
+            
+            con.close();
+        } catch (SQLException ex) {
+             System.out.println("Cannot retrieve Service data!");
+        }
+    }
+
+    public void retrieveServices(ArrayList<AccountService> serviceList)
     {
         Statement st = null;
         ResultSet rs = null;
@@ -210,6 +263,48 @@ public class DataDAO {
             con.close();
         } catch (SQLException ex) {
              System.out.println("Cannot insert client due to ...");
+        }
+    }
+
+    void insertBatchServices(ArrayList<String> newServiceID) {
+        
+        String query = "insert into obriensmanagement.services(serviceID, clientID, periodEnd, progress) values(?,?,?,?);";   
+        SimpleDateFormat sdf1 = new SimpleDateFormat("MM-yyyy");
+        try {
+            getConnection();
+            con.setAutoCommit(false);
+            
+            PreparedStatement st = con.prepareStatement(query);
+            for(int i = 0; i<newServiceID.size(); i++)
+            {
+                String serviceID = newServiceID.get(i);
+                String clientID = newServiceID.get(i).substring(9,newServiceID.get(i).length());
+                String dateString = newServiceID.get(i).substring(5,7) + "-" + newServiceID.get(i).substring(1,5);
+                java.util.Date date = sdf1.parse(dateString);
+                java.sql.Date sqlDate = new java.sql.Date(date.getTime());  
+                //System.out.println(clientID + "  " + dateString);
+                st.setString(1,serviceID);
+                st.setString(2,clientID);
+                st.setDate(3,sqlDate);
+                st.setInt(4, 0);
+                
+                st.addBatch();
+                //st.setString(4,c.getAddress());
+                //st.setString(5,c.getRepName());
+                //st.setDate(6, java.sql.Date.valueOf(c.getRepDOB().));
+                //LocalDate ld = LocalDate.now();
+                //st.setDate(6, java.sql.Date.valueOf(ld));
+                //st.setString(7, c.getContactNo());
+                //st.setString(8, c.getMail());
+            }
+            int [] updateCounts = st.executeBatch();
+            con.commit();
+            con.setAutoCommit(true);
+            con.close();
+        } catch (SQLException ex) {
+             System.out.println("Cannot insert service batch due to ...");
+        } catch (ParseException ex) {
+            System.out.println("Cannot convert the String to date");
         }
     }
 

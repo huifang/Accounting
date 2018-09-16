@@ -63,10 +63,16 @@ public class ClientTableModel extends AbstractTableModel {
                 retObject = clientList.get(rowIndex).getCname();
                 break;
             case 2: 
-                retObject = clientList.get(rowIndex).getMail();
+                if(clientList.get(rowIndex).getMail()!=null)
+                   retObject = clientList.get(rowIndex).getMail();
+                else
+                   retObject = "";
                 break;
             case 3:
-                retObject = clientList.get(rowIndex).getTaxNo();
+                if(clientList.get(rowIndex).getTaxNo()!= null)
+                    retObject = clientList.get(rowIndex).getTaxNo();
+                else
+                    retObject = "";
                 break;
         }
         
