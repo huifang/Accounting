@@ -24,7 +24,7 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.obrien.pdfboxwrapper</code-name-base>
+                    <code-name-base>org.obrien.pdfbox</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>

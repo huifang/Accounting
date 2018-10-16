@@ -188,7 +188,7 @@ public class MainPanel extends JPanel{
                 }
             }
         });
-        
+        //search function - include 3 fields search
         cSearch.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -211,7 +211,32 @@ public class MainPanel extends JPanel{
                             sstm.fireTableDataChanged();
                             break;
                         }
-                        //else if
+                        else if(p.getSearchBy()==2 && p.getSearchText().equals(clientTable.getValueAt(i, 4)))
+                        {
+                            //get ith row
+                            clientTable.requestFocus();
+                            clientTable.changeSelection(i, 0, false, false);
+                            dao.retrieveSelectedServices(selServiceList, selClientID);
+                        
+                            sstm.fireTableDataChanged();
+                            break;
+                        }
+                        else if(p.getSearchBy()==1)
+                        {
+                            String input = p.getSearchText().replaceAll("\\s+","").toLowerCase();
+                            String match = ((String)clientTable.getValueAt(i, 2)).replaceAll("\\s+","").toLowerCase();
+                            
+                            if(match.contains(input))
+                            {
+                                clientTable.requestFocus();
+                                clientTable.changeSelection(i, 0, false, false);
+                                dao.retrieveSelectedServices(selServiceList, selClientID);
+
+                                sstm.fireTableDataChanged();
+                                break;
+                            }
+                        }
+                        
                     }
                 }
             }
@@ -225,25 +250,57 @@ public class MainPanel extends JPanel{
             public void actionPerformed(ActionEvent e) {
                 //popup file selection dialog and read tax no, return type and first return date
                 //System.out.println("Input Tax info");
+                String ename = clientTable.getValueAt(clientTable.getSelectedRow(), 2).toString().replaceAll("\\s+","").toLowerCase(); 
+                String cid = clientTable.getValueAt(clientTable.getSelectedRow(), 0).toString();
                 JFileChooser fc = new JFileChooser();
                 int returnVal = fc.showOpenDialog(null);
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
+                    File file = fc.getSelectedFile();
                     try {
-                        PDDocument pdDoc = PDDocument.load(file);
-                        PDFTextStripper pdfStripper = new PDFTextStripper();
-                        String parsedText = pdfStripper.getText(pdDoc);
-                                                
-                        if(parsedText.length() > 100)
-                        {    
-                            int a = parsedText.indexOf("Registration Number:");
+                        try (PDDocument pdDoc = PDDocument.load(file)) {
+                            PDFTextStripper pdfStripper = new PDFTextStripper();
+                            String parsedText = pdfStripper.getText(pdDoc);
+                            
+                            if(parsedText.length() > 100)
+                            {
+                                int indNo = parsedText.indexOf("Registration Number:");
+                                int indName = parsedText.indexOf("Registered name:");
+                                int indDate1 = parsedText.indexOf("Effective Date of Registration:");
+                                int indDate2 = parsedText.indexOf("VAT return period end date");
+                                int indType = parsedText.indexOf("Frequency of returns:");
+                                
+                                String taxno = parsedText.substring(indNo+21,indNo+32).replaceAll("\\s+","");
+                                String regname = parsedText.substring(indName+17,indName+27);
+                                String date1_string = parsedText.substring(indDate1+32,indDate1+43);
+                                String date2_string = parsedText.substring(indDate2+29,indDate2+40);
+                                String freq = parsedText.substring(indType+22,indType+23);
+                                //if(ename.contains(regname))
+                                String conv_date1 = date1_string.substring(7) + "-" + date1_string.substring(3,6) + "-" + date1_string.substring(0,2);
+                                String conv_date2 = date2_string.substring(7) + "-" + date2_string.substring(3,6) + "-" + date2_string.substring(0,2);
+                                dao.updateTaxInfo(cid, taxno, freq, conv_date1, conv_date2);
+                                //here is for updating the view
+                                clientList.clear();
+                                dao.retrieveClients(clientList);
+                                ctm.setClientList(clientList);
+                                //System.out.println(selClientID);
+                                ctm.fireTableDataChanged();
 
-                            String taxno = parsedText.substring(a+21,a+32);
-                            System.out.println(taxno);
-                        }
-                        else
-                        {
-                            System.out.println("Fail to read pdf file, maybe try manual import.");
+                                for(int i = 0; i<clientList.size(); i++)
+                                {
+                                    //System.out.println(clientList.get(i).getAgencyID());
+                                    if(clientList.get(i).getAgencyID().equals(selClientID))
+                                    {
+                                        clientTable.requestFocus();
+                                        clientTable.changeSelection(i,0, false,false);
+                                        break;
+                                    }
+                                }
+                                //uphere
+                            }
+                            else
+                            {
+                                JOptionPane.showMessageDialog(null,"Fail to read pdf file, maybe try manual import.");
+                            }
                         }
                         
                     } catch (IOException ex) {

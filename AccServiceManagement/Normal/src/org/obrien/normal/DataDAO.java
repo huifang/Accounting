@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import javax.swing.JOptionPane;
+import org.openide.util.Exceptions;
 
 /**
  *
@@ -429,6 +430,35 @@ public class DataDAO {
             }
         } catch(ParseException e){
             JOptionPane.showMessageDialog(null, "The input DOB is not in correct format!");
+        }
+    }  
+    
+    //date1 is effective date and date 2 is first return date
+    public void updateTaxInfo(String cid, String taxno, String type, String Date1, String Date2) 
+    {
+        //Statement st = null;
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MMM-dd");
+        String query = "update obriensmanagement.clients set taxno=?,"
+                + " periodtype=?, effectivedate=?, firstreturn=?"
+                + " where agencyID= \"" + cid + "\";";
+        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        try {
+            getConnection();
+            PreparedStatement st = con.prepareStatement(query);
+           
+            st.setString(1,taxno);
+            st.setString(2,type);
+            java.util.Date date1 = sdf1.parse(Date1);
+            java.util.Date date2 = sdf1.parse(Date2);
+            st.setDate(3, new java.sql.Date(date1.getTime()));
+            st.setDate(4,new java.sql.Date(date2.getTime()));
+                
+            st.execute();
+            con.close();
+        } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null, "Cannot update client due to some inputs are not correct");
+        } catch (ParseException ex) {
+            Exceptions.printStackTrace(ex);
         }
     }
 }

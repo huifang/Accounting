@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-AutoUpdate-Show-In-Client: true
-OpenIDE-Module: org.obrien.pdfboxwrapper
-OpenIDE-Module-Localizing-Bundle: org/obrien/pdfboxwrapper/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-
