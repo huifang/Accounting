@@ -9,7 +9,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -34,6 +36,7 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.openide.util.Exceptions;
 
 /**
  * We use this panel to integrate client panel and service panel for quick development
@@ -83,10 +86,10 @@ public class MainPanel extends JPanel{
     JButton sSingleCreation = new JButton("New Service Creation");
     JButton sBatchCreation = new JButton("Services Batch Creation");
     JButton sHighlight = new JButton("Show Uncompleted Services");
-    JButton sSetReceipts = new JButton("Set Payment Batch");
-    JButton sUndoReceipts = new JButton("Un-set Payment Batch");
-    JButton sServiceCharge = new JButton("Generate Xml Receipts");
-    JButton sReceivePayment = new JButton("Transaction Completion");
+    //JButton sSetReceipts = new JButton("Set Payment Batch");
+    //JButton sUndoReceipts = new JButton("Un-set Payment Batch");
+    //JButton sServiceCharge = new JButton("Generate Xml Receipts");
+    //JButton sReceivePayment = new JButton("Transaction Completion");
     
     MainPanel()
     {
@@ -155,10 +158,16 @@ public class MainPanel extends JPanel{
                     String repName = p.repNameBox.getText();
                     String email = p.contactEmailBox.getText();
                     String tel = p.telBox.getText();
-                    //the last is conversion from text to Birtheday
+                    String dob = p.repDobBox.getText();
                     
+                    AccountClient c = new AccountClient(agencyID, ccName);
+                    c.setEName(ecName);
+                    c.setAddress(address);
+                    c.setMail(email);
+                    c.setRepName(repName);
+                    c.setRepDob(dob);
+                    c.setContactNo(tel);
                     
-                    AccountClient c = new AccountClient(p.cNoBox.getText(), p.cNameCBox.getText());
                     dao.insertNewClient(c);
                     clientList.clear();
                     dao.retrieveClients(clientList);
@@ -248,13 +257,34 @@ public class MainPanel extends JPanel{
         menuItem2.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Will implement/Allow client info changes");
-                AccountClient tmpC = new AccountClient(); 
-                dao.retrieveClientDetails(tmpC);
+
+                AccountClient tmpC = new AccountClient(selClientID); 
+                dao.retrieveClientDetails(selClientID, tmpC);
+                               
                 ClientUpdatePanel p = new ClientUpdatePanel(tmpC);
                 int click = JOptionPane.showConfirmDialog(null, p, "Update Client", JOptionPane.OK_CANCEL_OPTION);
                 if(click == JOptionPane.OK_OPTION) {
-                
+                   //verify the taxno and make sure it is 9 digits or empty,check the input 1by1 
+                   AccountClient updateC = new AccountClient(selClientID);
+                   updateC.setCName(p.cNameCBox.getText());
+                   updateC.setEName(p.cNameEBox.getText());
+                   updateC.setAddress(p.cAddressBox.getText());
+                   updateC.setRepName(p.repNameBox.getText());
+                   updateC.setRepDob(p.repDobBox.getText());
+                   updateC.setMail(p.contactEmailBox.getText());
+                   updateC.setContactNo(p.telBox.getText());
+                   switch (p.taxnoBox.getText().length()) {
+                        case 0:
+                            dao.updateClientNoTax(updateC); 
+                            break;
+                        case 9:
+                            updateC.setTaxNo(p.taxnoBox.getText());
+                            dao.updateClient(updateC);
+                            break;
+                        default:
+                            JOptionPane.showMessageDialog(null,"You can either leave the tax no box empty or provide 9 digits input!");
+                            break;
+                    }
                 }
             }
         });
@@ -272,8 +302,7 @@ public class MainPanel extends JPanel{
                     {
                         selClientID = clientTable.getValueAt(clientTable.getSelectedRow(), 0).toString();                
                         dao.retrieveSelectedServices(selServiceList, selClientID);
-                        
-                        //selServiceID = null;
+
                         sstm.fireTableDataChanged();
                     }
                  }
@@ -358,10 +387,10 @@ public class MainPanel extends JPanel{
         sButtonPanel.add(sSingleCreation);
         sButtonPanel.add(sBatchCreation);
         sButtonPanel.add(sHighlight);
-        sButtonPanel.add(sSetReceipts);
-        sButtonPanel.add(sUndoReceipts);
-        sButtonPanel.add(sServiceCharge);
-        sButtonPanel.add(sReceivePayment);
+        //sButtonPanel.add(sSetReceipts);
+        //sButtonPanel.add(sUndoReceipts);
+        //sButtonPanel.add(sServiceCharge);
+        //sButtonPanel.add(sReceivePayment);
         sPanel.add(sButtonPanel, BorderLayout.SOUTH);
         
         sSingleCreation.addActionListener(new ActionListener(){
@@ -452,6 +481,25 @@ public class MainPanel extends JPanel{
                 ArrayList<AccountService> unServices = new ArrayList<>();
                 dao.retrieveUncompletedServices(unServices);
                 UnCompleteServicePanel p = new UnCompleteServicePanel(unServices);
+                try {
+                    //now save uncomplete services to a file
+                    PrintWriter pw = new PrintWriter(new File("C:\\temp\\uncompletion.csv"));
+                    for(int i = 0; i < unServices.size(); i++)
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(unServices.get(i).getClientId());
+                        sb.append(',');
+                        sb.append(unServices.get(i).getPeriedDate());
+                        sb.append(',');
+                        sb.append(unServices.get(i).getProgress());
+                        sb.append('\n');
+                        pw.write(sb.toString());
+                    }
+                    pw.close();
+                } catch (FileNotFoundException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                
                 JOptionPane.showMessageDialog(null, p, "Uncompleted Services", JOptionPane.INFORMATION_MESSAGE);
                 
             }
@@ -531,7 +579,7 @@ public class MainPanel extends JPanel{
         mainSplitPane.add(sPanel);
         //mainSplitPane.getRightComponent().setLayout(new BorderLayout());
         //mainSplitPane.getRightComponent().add(serviceTable.getTableHeader(), BorderLayout.PAGE_START);
-        mainSplitPane.setDividerLocation(0.3);
+        mainSplitPane.setResizeWeight(0.4);
         
         this.setLayout(new BorderLayout());
         this.add(mainSplitPane, BorderLayout.CENTER);

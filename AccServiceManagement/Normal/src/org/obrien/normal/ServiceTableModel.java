@@ -22,9 +22,9 @@ public class ServiceTableModel extends AbstractTableModel {
         "PeriodEnd",
         "Progress",
         "SalesAmount",
-        "VATAmount",
-        "ServiceFee",
-        "PaidAmount"
+        "VATAmount"
+        //"ServiceFee",
+        //"PaidAmount"
     };
     
     private final Class[] columns = new Class[] {
@@ -34,9 +34,9 @@ public class ServiceTableModel extends AbstractTableModel {
         String.class,
         Integer.class,
         Double.class,
-        Double.class,
-        Double.class,
         Double.class
+        //Double.class,
+        //Double.class
     };
     
     public ServiceTableModel(ArrayList<AccountService> serviceList)
@@ -87,12 +87,12 @@ public class ServiceTableModel extends AbstractTableModel {
             case 6:
                 retObject = serviceList.get(rowIndex).getVATAmount();
                 break;
-            case 7:
-                retObject = serviceList.get(rowIndex).getServiceFee();
-                break;
-            case 8:
-                retObject = serviceList.get(rowIndex).getPaidAmount();
-                break;
+            //case 7:
+            //    retObject = serviceList.get(rowIndex).getServiceFee();
+            //    break;
+            //case 8:
+            //    retObject = serviceList.get(rowIndex).getPaidAmount();
+            //    break;
                 
         }
         

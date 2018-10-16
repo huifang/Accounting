@@ -15,11 +15,13 @@ public class ClientTableModel extends AbstractTableModel {
     private final String[] columnNames = {
         "AgencyID",
         "CompanyName",
+        "English Name",
         "Contact Email",
         "Tax No."
     };
     
     private final Class[] columns = new Class[] {
+        String.class,
         String.class,
         String.class,
         String.class,
@@ -63,12 +65,18 @@ public class ClientTableModel extends AbstractTableModel {
                 retObject = clientList.get(rowIndex).getCname();
                 break;
             case 2: 
+                if(clientList.get(rowIndex).getEname()!=null)
+                   retObject = clientList.get(rowIndex).getEname();
+                else
+                   retObject = "";
+                break;
+            case 3: 
                 if(clientList.get(rowIndex).getMail()!=null)
                    retObject = clientList.get(rowIndex).getMail();
                 else
                    retObject = "";
                 break;
-            case 3:
+            case 4:
                 if(clientList.get(rowIndex).getTaxNo()!= null)
                     retObject = clientList.get(rowIndex).getTaxNo();
                 else

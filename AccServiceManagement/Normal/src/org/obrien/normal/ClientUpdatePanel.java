@@ -53,37 +53,53 @@ public class ClientUpdatePanel extends JPanel{
     {
         this.setLayout(new GridLayout(11,2));
             
-        cNo = new JLabel("Client Ref.:");
+        cNo = new JLabel("Client Ref.");
         cNoBox = new JTextField();
         cNoBox.setText(ac.getAgencyID());
-        cNameEnglish = new JLabel("Company Name(E):");
-        cNameEBox = new JTextField();
-        cNameEBox.setText(ac.getEname());
-        cNameChinese = new JLabel("Company Name(C):");
-        cNameCBox = new JTextField();
-        cNameCBox.setText(ac.getCname());
-        cAddress = new JLabel("Company Address:");
-        cAddressBox = new JTextField();
-        cAddressBox.setText(ac.getAddress());
-        repName = new JLabel("Representative Name:");
-        repNameBox = new JTextField();
-        repNameBox.setText(ac.getRepName());
-        repDob = new JLabel("Representative DOB:");
-        repDobBox = new JTextField();
-        repDobBox.setText(dateFormat.format(ac.getRepDOB()));
-        contactEmail = new JLabel("Contact Email:");
-        contactEmailBox = new JTextField();
-        contactEmailBox.setText(ac.getMail());
-        tel = new JLabel("Contact No.:");
-        telBox = new JTextField();
-        telBox.setText(ac.getContactNo());
-        taxno = new JLabel("Tax Ref. No.:");
-        taxnoBox = new JTextField();
+        cNoBox.setEnabled(false);
         
-        rtype = new JLabel("Tax Return Type:");
-        rtypeBox = new JTextField();
-        retDate = new JLabel("Latest Return Date:");
-        retDateBox = new JTextField();
+        cNameEnglish = new JLabel("Company Name(E)");
+        if(ac.getEname()!=null)
+            cNameEBox = new JTextField(ac.getEname());
+        else
+            cNameEBox = new JTextField();
+        
+        cNameChinese = new JLabel("Company Name(C)");
+        cNameCBox = new JTextField();
+        if (ac.getCname()!=null)
+            cNameCBox= new JTextField(ac.getCname());
+        else
+            cNameCBox = new JTextField();
+                
+        cAddress = new JLabel("Company Address");
+        cAddressBox = new JTextField();
+        if(ac.getAddress()!=null)
+            cAddressBox.setText(ac.getAddress());
+        repName = new JLabel("Representative Name");
+        repNameBox = new JTextField();
+        if(ac.getRepName()!=null)
+            repNameBox.setText(ac.getRepName());
+        
+        repDob = new JLabel("Rep. DOB(Format: yyyy-mm-dd)");
+        repDobBox = new JTextField();
+        repDobBox.setText(ac.getRepDOB());
+        
+        contactEmail = new JLabel("Contact Email");
+        contactEmailBox = new JTextField();
+        if(ac.getMail()!=null)
+            contactEmailBox.setText(ac.getMail());
+        tel = new JLabel("Contact No.");
+        telBox = new JTextField();
+        if(ac.getContactNo()!=null)
+            telBox.setText(ac.getContactNo());
+        taxno = new JLabel("Tax Ref. No.");
+        taxnoBox = new JTextField();
+        if(ac.getTaxNo()!=null)
+            taxnoBox.setText(ac.getTaxNo());
+        //rtype = new JLabel("Tax Return Type:");
+        //rtypeBox = new JTextField();
+        //retDate = new JLabel("Latest Return Date:");
+        //retDateBox = new JTextField();
     
         this.add(cNo);
         this.add(cNoBox);
@@ -103,11 +119,11 @@ public class ClientUpdatePanel extends JPanel{
         this.add(telBox);
         this.add(taxno);
         this.add(taxnoBox);
-        this.add(rtype);
-        this.add(rtypeBox);
-        this.add(retDate);
-        this.add(retDateBox);
-        
+        //this.add(rtype);
+        //this.add(rtypeBox);
+        //this.add(retDate);
+        //this.add(retDateBox);
+
     }
     
 }

@@ -40,22 +40,22 @@ public class ClientRegPanel extends JPanel{
     {
         this.setLayout(new GridLayout(8,2));
             
-        cNo = new JLabel("Client Ref.");
-        cNoBox = new JTextField();
+        cNo = new JLabel("Client Unique Reference");
+        cNoBox = new JTextField("",30);
         cNameEnglish = new JLabel("Company Name(E)");
-        cNameEBox = new JTextField();
+        cNameEBox = new JTextField("",30);
         cNameChinese = new JLabel("Company Name(C)");
-        cNameCBox = new JTextField();
+        cNameCBox = new JTextField("",30);
         cAddress = new JLabel("Company Address");
-        cAddressBox = new JTextField();
+        cAddressBox = new JTextField("",30);
         repName = new JLabel("Representative Name");
-        repNameBox = new JTextField();
-        repDob = new JLabel("Representative DOB");
-        repDobBox = new JTextField();
+        repNameBox = new JTextField("",30);
+        repDob = new JLabel("Rep. DOB (Format:yyyy-mm-dd)");
+        repDobBox = new JTextField("",30);
         contactEmail = new JLabel("Contact Email");
-        contactEmailBox = new JTextField();
+        contactEmailBox = new JTextField("",30);
         tel = new JLabel("Contact No.");
-        telBox = new JTextField();
+        telBox = new JTextField("",30);
         
         this.add(cNo);
         this.add(cNoBox);

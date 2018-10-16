@@ -18,7 +18,7 @@ public class AccountClient {
     private String ename;
     private String address;
     private String repname;
-    private Date repdob;
+    private String repdob;
     private Date regdate;
     private String contactno;
     private String email;
@@ -28,22 +28,9 @@ public class AccountClient {
     
     SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM");
     
-    AccountClient()
+    AccountClient(String agencyid)
     {
-        agencyid = "";
-        cname = "";
-        ename = "";
-        address = "";
-        repname = "";
-        contactno = "";
-        email = "";
-        taxno = "";
-        //try {
-            //repdob = sf.parse("1985-06");
-            //regdate = sf.parse("2017-08");
-        //} catch (ParseException ex) {
-        //    Logger.getLogger(AccountClient.class.getName()).log(Level.SEVERE, null, ex);
-        //}
+        this.agencyid = agencyid;
     }
     
     AccountClient(String agencyid, String cname)
@@ -77,7 +64,7 @@ public class AccountClient {
         return this.repname;
     }
     
-    public Date getRepDOB()
+    public String getRepDOB()
     {
         return this.repdob;
     }
@@ -107,6 +94,11 @@ public class AccountClient {
         this.email = mail;
     }
     
+    public void setCName(String cname)
+    {
+        this.cname = cname;
+    }
+    
     public void setEName(String ename)
     {
         this.ename = ename;
@@ -120,6 +112,16 @@ public class AccountClient {
     public void setRepName(String repname)
     {
         this.repname = repname;
+    }
+    
+    public void setRepDob (String dob)
+    {
+        this.repdob = dob;
+    }
+    
+    public void setContactNo(String tel)
+    {
+        this.contactno = tel;
     }
     
     public void setTaxNo(String taxno)

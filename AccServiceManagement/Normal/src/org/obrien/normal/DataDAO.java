@@ -9,10 +9,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
-import org.openide.util.Exceptions;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -46,7 +47,7 @@ public class DataDAO {
     {
         Statement st = null;
         ResultSet rs = null;
-        String query = "SELECT agencyID, cname, email, taxno "
+        String query = "SELECT agencyID, cname, email, taxno, ename "
                 + "from obriensmanagement.clients;";
         
         try {
@@ -59,13 +60,17 @@ public class DataDAO {
                 String tmpname = rs.getString(2);
                 String email = "";
                 String taxno = "";
+                String ename = "";
                 if(rs.getString(3)!=null)
                     email = rs.getString(3);
-                if(rs.getString(3)!=null)
+                if(rs.getString(4)!=null)
                     taxno = rs.getString(4);
+                if(rs.getString(5)!=null)
+                    ename = rs.getString(5);
                 
                 AccountClient tmpClient = new AccountClient(tmpAgencyID, tmpname);
                 tmpClient.setMail(email);
+                tmpClient.setEName(ename);
                 tmpClient.setTaxNo(taxno);
                 
                 clientList.add(tmpClient);
@@ -77,8 +82,49 @@ public class DataDAO {
         }
     }
     
-    void retrieveClientDetails(AccountClient tmpC) {
-        System.out.println("This needs to be implemented to retrieve client details");
+    void retrieveClientDetails(String cid, AccountClient tmpC) {
+        Statement st = null;
+        ResultSet rs = null;
+        String query = "SELECT agencyID, cname, ename, address, repname, repdob, email, contactno,taxno "
+                + "from obriensmanagement.clients where agencyID =\"" + cid + "\";";
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
+        
+        try {
+            getConnection();
+            st = con.createStatement();
+            rs = st.executeQuery(query);
+            
+            while(rs.next()) {
+                String tmpAgencyID = rs.getString(1);
+                String tmpname = rs.getString(2);
+                
+                tmpC.setCName(tmpname);
+                if(rs.getString(3)!=null)
+                   tmpC.setEName(rs.getString(3));
+                if(rs.getString(4)!=null)
+                   tmpC.setAddress(rs.getString(4));
+                if(rs.getString(5)!=null)
+                   tmpC.setRepName(rs.getString(5));
+                //will get the dob here
+                if(rs.getDate(6)!=null)
+                {
+                    java.sql.Date d1 = rs.getDate(6);
+                    String dstr = sdf1.format(d1);
+                    tmpC.setRepDob(dstr);
+                }
+                if(rs.getString(7)!=null)
+                   tmpC.setMail(rs.getString(7));
+                if(rs.getString(8)!=null)
+                    tmpC.setContactNo(rs.getString(8));
+                if(rs.getString(9)!=null)
+                    tmpC.setTaxNo(rs.getString(9));
+
+            }
+            
+            con.close();
+        } catch (SQLException ex) {
+             System.out.println("Cannot retrieve Client data!");
+        }
     }
     
     public void retrieveLatestReturnDate(Map returnMap) {
@@ -207,7 +253,7 @@ public class DataDAO {
         ResultSet rs = null;
         String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
                 + "from obriensmanagement.services where services.progress != 3 and services.progress != 4;";
-        //System.out.println(query);
+
         serviceList.clear();
         
         try {
@@ -239,30 +285,39 @@ public class DataDAO {
     }
         
     //here is for insert
-    public void insertNewClient(AccountClient c)
+    public void insertNewClient(AccountClient c) 
     {
         //Statement st = null;
-        //String query = "insert into obriensmanagement.clients(agencyID, cname, ename,"
-        //        + "address, repname,regdate,conatactno,email) values(?,?,?,?,?,?,?,?,?);";
-          String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-mm-dd");
+        String query = "insert into obriensmanagement.clients(agencyID, cname, ename,"
+                + "address,repname,repdob,regdate,contactno,email) values(?,?,?,?,?,?,?,?,?);";
+        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        java.util.Date d =null;
         try {
-            getConnection();
-            PreparedStatement st = con.prepareStatement(query);
-            st.setString(1,c.getAgencyID());
-            st.setString(2,c.getCname());
-            //st.setString(3,c.getEname());
-            //st.setString(4,c.getAddress());
-            //st.setString(5,c.getRepName());
-            //st.setDate(6, java.sql.Date.valueOf(c.getRepDOB().));
-            //LocalDate ld = LocalDate.now();
-            //st.setDate(6, java.sql.Date.valueOf(ld));
-            //st.setString(7, c.getContactNo());
-            //st.setString(8, c.getMail());
+            d = sdf1.parse(c.getRepDOB());
             
-            st.execute();
-            con.close();
-        } catch (SQLException ex) {
-             System.out.println("Cannot insert client due to ...");
+            try {
+                getConnection();
+                PreparedStatement st = con.prepareStatement(query);
+            
+                st.setString(1,c.getAgencyID());
+                st.setString(2,c.getCname());
+                st.setString(3,c.getEname());
+                st.setString(4,c.getAddress());
+                st.setString(5,c.getRepName());
+                st.setDate(6, new java.sql.Date(d.getTime()));
+                LocalDate ld = LocalDate.now();
+                st.setDate(7, java.sql.Date.valueOf(ld));
+                st.setString(8, c.getContactNo());
+                st.setString(9, c.getMail());
+
+                st.execute();
+                con.close();
+            } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null,"Cannot insert client due to some inputs are not correct");
+            }
+        } catch(ParseException e){
+            JOptionPane.showMessageDialog(null, "The input DOB is not in correct format!");
         }
     }
 
@@ -302,10 +357,78 @@ public class DataDAO {
             con.setAutoCommit(true);
             con.close();
         } catch (SQLException ex) {
-             System.out.println("Cannot insert service batch due to ...");
+             JOptionPane.showMessageDialog(null,"Cannot insert service batch due to ...");
         } catch (ParseException ex) {
-            System.out.println("Cannot convert the String to date");
+            JOptionPane.showMessageDialog(null, "Cannot convert the String to date");
         }
     }
 
+    public void updateClientNoTax(AccountClient c) 
+    {
+        //Statement st = null;
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-mm-dd");
+        String query = "update obriensmanagement.clients set cname=?,"
+                + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?"
+                + " where agencyID= \"" + c.getAgencyID() + "\";";
+        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        java.util.Date d =null;
+        try {
+            d = sdf1.parse(c.getRepDOB());
+            
+            try {
+                getConnection();
+                PreparedStatement st = con.prepareStatement(query);
+            
+                st.setString(1,c.getCname());
+                st.setString(2,c.getEname());
+                st.setString(3,c.getAddress());
+                st.setString(4,c.getRepName());
+                st.setDate(5, new java.sql.Date(d.getTime()));
+                st.setString(6, c.getContactNo());
+                st.setString(7, c.getMail());
+
+                st.execute();
+                con.close();
+            } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null,"Cannot update client due to some inputs are not correct");
+            }
+        } catch(ParseException e){
+            JOptionPane.showMessageDialog(null, "The input DOB is not in correct format!");
+        }
+    }
+    
+    public void updateClient(AccountClient c) 
+    {
+        //Statement st = null;
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-mm-dd");
+        String query = "update obriensmanagement.clients set cname=?,"
+                + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?, taxno=?"
+                + " where agencyID= \"" + c.getAgencyID() + "\";";
+        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        java.util.Date d =null;
+        try {
+            d = sdf1.parse(c.getRepDOB());
+            
+            try {
+                getConnection();
+                PreparedStatement st = con.prepareStatement(query);
+            
+                st.setString(1,c.getCname());
+                st.setString(2,c.getEname());
+                st.setString(3,c.getAddress());
+                st.setString(4,c.getRepName());
+                st.setDate(5, new java.sql.Date(d.getTime()));
+                st.setString(6, c.getContactNo());
+                st.setString(7, c.getMail());
+                st.setString(8,c.getTaxNo());
+                
+                st.execute();
+                con.close();
+            } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null, "Cannot update client due to some inputs are not correct");
+            }
+        } catch(ParseException e){
+            JOptionPane.showMessageDialog(null, "The input DOB is not in correct format!");
+        }
+    }
 }
