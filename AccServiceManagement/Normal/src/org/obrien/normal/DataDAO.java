@@ -322,6 +322,35 @@ public class DataDAO {
         }
     }
 
+    void insertNewService(String newServiceID) {
+        
+        String query = "insert into obriensmanagement.services(serviceID, clientID, periodEnd, progress) values(?,?,?,?);";   
+        SimpleDateFormat sdf1 = new SimpleDateFormat("MM-yyyy");
+        try {
+            getConnection();
+            
+            PreparedStatement st = con.prepareStatement(query);
+
+            String serviceID = newServiceID;
+            String clientID = newServiceID.substring(9,newServiceID.length());
+            String dateString = newServiceID.substring(5,7) + "-" + newServiceID.substring(1,5);
+            java.util.Date date = sdf1.parse(dateString);
+            java.sql.Date sqlDate = new java.sql.Date(date.getTime());  
+                //System.out.println(clientID + "  " + dateString);
+            st.setString(1,serviceID);
+            st.setString(2,clientID);
+            st.setDate(3,sqlDate);
+            st.setInt(4, 0);
+            
+            st.execute();
+            con.close();
+        } catch (SQLException ex) {
+             JOptionPane.showMessageDialog(null,"Cannot insert service batch due to ...");
+        } catch (ParseException ex) {
+            JOptionPane.showMessageDialog(null, "Cannot convert the String to date");
+        }
+    }
+    
     void insertBatchServices(ArrayList<String> newServiceID) {
         
         String query = "insert into obriensmanagement.services(serviceID, clientID, periodEnd, progress) values(?,?,?,?);";   

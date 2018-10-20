@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -21,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -74,6 +76,7 @@ public class MainPanel extends JPanel{
     JTable serviceTable;
     ServiceTableModel stm;
     JScrollPane serviceTableContainer;
+    JPanel ssPanel;
     
     //client management buttons
     JPanel cButtonPanel = new JPanel();
@@ -90,6 +93,9 @@ public class MainPanel extends JPanel{
     //JButton sUndoReceipts = new JButton("Un-set Payment Batch");
     //JButton sServiceCharge = new JButton("Generate Xml Receipts");
     //JButton sReceivePayment = new JButton("Transaction Completion");
+    JLabel sAmountLabel = new JLabel("0.0");
+    
+    double threeSAmount;
     
     MainPanel()
     {
@@ -122,6 +128,16 @@ public class MainPanel extends JPanel{
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = new JFileChooser();
+                String agencyID=null;
+                String ccName=null;
+                String ecName=null;
+                String address=null;
+                String repName=null;
+                String email=null;
+                String tel=null;
+                Date dob=null;
+                String dobstring = null;
+                SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd");
                 int returnVal = fc.showOpenDialog(null);
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fc.getSelectedFile();
@@ -129,13 +145,66 @@ public class MainPanel extends JPanel{
                     FileInputStream fileStream = new FileInputStream(file);
                     HSSFWorkbook wb = new HSSFWorkbook(fileStream);
                     HSSFSheet sheet = wb.getSheetAt(0);
-                    HSSFCell cell;
+                    //HSSFCell cell;
                     //cell = sheet.getRow(1).getCell(1);
-                    cell = sheet.getRow(1).getCell(2);
-                    String chWords = cell.getStringCellValue();
-                    System.out.println(chWords);
-                    System.out.println(cell.getStringCellValue());
-                    } catch (IOException ex) {
+                    if(sheet.getRow(1).getCell(1)!=null)
+                        agencyID = sheet.getRow(1).getCell(1).getStringCellValue();
+                    if(sheet.getRow(2).getCell(1)!=null)
+                        ccName = sheet.getRow(2).getCell(1).getStringCellValue();
+                    if(sheet.getRow(2).getCell(2)!=null)
+                        ecName = sheet.getRow(2).getCell(2).getStringCellValue(); 
+                    if(sheet.getRow(3).getCell(2)!=null)
+                        address= sheet.getRow(2).getCell(2).getStringCellValue();
+                    if(sheet.getRow(4).getCell(1)!=null)
+                        repName= sheet.getRow(4).getCell(1).getStringCellValue();
+                    if(sheet.getRow(5).getCell(1)!=null)
+                    {
+                        dob = sheet.getRow(5).getCell(1).getDateCellValue();
+                        dobstring = sf.format(dob);
+                    }
+                    if(sheet.getRow(9).getCell(1)!=null)
+                        tel= sheet.getRow(9).getCell(1).getStringCellValue();
+                    if(sheet.getRow(11).getCell(1)!=null)
+                        email= sheet.getRow(11).getCell(1).getStringCellValue();
+                    System.out.println(ecName);
+                    System.out.println(email);
+                    System.out.println(repName);
+                    System.out.println(tel);
+                    System.out.println(ccName);
+                    //if get cliend id and cname
+                    if(agencyID != null && ccName != null)
+                    {
+                        AccountClient c = new AccountClient(agencyID, ccName);
+                        c.setEName(ecName);
+                        c.setAddress(address);
+                        c.setMail(email);
+                        c.setRepName(repName);
+                        c.setRepDob(dobstring);
+                        c.setContactNo(tel);
+
+                        dao.insertNewClient(c);
+                        clientList.clear();
+                        dao.retrieveClients(clientList);
+                        ctm.setClientList(clientList);
+                        //System.out.println(selClientID);
+                        ctm.fireTableDataChanged();
+
+                        for(int i = 0; i<clientList.size(); i++)
+                        {
+                            //System.out.println(clientList.get(i).getAgencyID());
+                            if(clientList.get(i).getAgencyID().equals(selClientID))
+                            {
+                                clientTable.requestFocus();
+                                clientTable.changeSelection(i,0, false,false);
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        JOptionPane.showMessageDialog(null,"Fail to read xls file, maybe try manual creation.");
+                    }
+                } catch (IOException ex) {
                         Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } else {
@@ -206,9 +275,12 @@ public class MainPanel extends JPanel{
                             clientTable.requestFocus();
                             clientTable.changeSelection(i, 0, false, false);
                             dao.retrieveSelectedServices(selServiceList, selClientID);
-                        
+                            sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
+                            ssPanel.repaint();
                             //selServiceID = null;
                             sstm.fireTableDataChanged();
+                            
                             break;
                         }
                         else if(p.getSearchBy()==2 && p.getSearchText().equals(clientTable.getValueAt(i, 4)))
@@ -218,6 +290,9 @@ public class MainPanel extends JPanel{
                             clientTable.changeSelection(i, 0, false, false);
                             dao.retrieveSelectedServices(selServiceList, selClientID);
                         
+                            sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
+                            ssPanel.repaint();
                             sstm.fireTableDataChanged();
                             break;
                         }
@@ -232,6 +307,10 @@ public class MainPanel extends JPanel{
                                 clientTable.changeSelection(i, 0, false, false);
                                 dao.retrieveSelectedServices(selServiceList, selClientID);
 
+                                sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
+                                ssPanel.repaint();
+                            
                                 sstm.fireTableDataChanged();
                                 break;
                             }
@@ -360,6 +439,10 @@ public class MainPanel extends JPanel{
                         selClientID = clientTable.getValueAt(clientTable.getSelectedRow(), 0).toString();                
                         dao.retrieveSelectedServices(selServiceList, selClientID);
 
+                        sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
+                        ssPanel.repaint();
+                            
                         sstm.fireTableDataChanged();
                     }
                  }
@@ -391,16 +474,22 @@ public class MainPanel extends JPanel{
         
         //retrieve selecte services
         dao.retrieveSelectedServices(selServiceList, selClientID);
-        
+        sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
         sstm = new ShortServiceTableModel(selServiceList);
         selServiceTable = new JTable(sstm);
         selServiceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         selServiceTableContainer = new JScrollPane(selServiceTable);
-        JPanel ssPanel = new JPanel();
+        ssPanel = new JPanel();
         ssPanel.setLayout(new BorderLayout());
         //ssPanel.add(selServiceTable.getTableHeader(),BorderLayout.NORTH);
         ssPanel.add(selServiceTableContainer, BorderLayout.CENTER);
-        
+
+        JPanel sAmountPanel = new JPanel();
+        JLabel textLabel = new JLabel("Total Amount of previous three months: ");
+        sAmountPanel.add(textLabel);
+        sAmountPanel.add(sAmountLabel);
+        ssPanel.add(sAmountPanel, BorderLayout.SOUTH);
         
         //add selection of short service table
         selServiceTable.getSelectionModel().addListSelectionListener(new ListSelectionListener()
@@ -453,7 +542,51 @@ public class MainPanel extends JPanel{
         sSingleCreation.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Create Single Service");
+                ServiceCreationPanel p = new ServiceCreationPanel();
+                int click = JOptionPane.showConfirmDialog(null, p, "Create Service", JOptionPane.OK_CANCEL_OPTION);
+                if(click == JOptionPane.OK_OPTION) {
+                    //here we have all the 8 attributes
+                    String newServiceID="";
+                    boolean isCreate = false;
+                    
+                    String agencyID = p.cClientIDBox.getText();
+                    String serviceTime = p.cYearMonthBox.getText();
+                    String serviceType = p.getInitLetter();
+                    switch(serviceType) {
+                        case "R":
+                        
+                        case "N":
+                            
+                        case "U":
+                            
+                        case "A":
+                            
+                        case "E":
+                            
+                        case "Q":
+                            
+                    }
+                    
+                    if(isCreate==true)
+                    {
+                        dao.insertNewService(newServiceID);
+                                        
+                        dao.retrieveServices(serviceList);
+                        
+                        dao.retrieveSelectedServices(selServiceList, selClientID);
+                        sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
+                        ssPanel.repaint();         
+                
+                        sstm.fireTableDataChanged();
+                        stm.fireTableDataChanged();
+                    }
+                    else
+                    {
+                        System.out.println("The input is not correct");
+                    }
+                
+                }
             }
         });
         
@@ -525,6 +658,10 @@ public class MainPanel extends JPanel{
                 //after insertion, retrieve all the services into the table again.
                 dao.retrieveServices(serviceList);
                 dao.retrieveSelectedServices(selServiceList, selClientID);
+                sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                            
+                ssPanel.repaint();         
+                
                 sstm.fireTableDataChanged();
                 stm.fireTableDataChanged();
                 //System.out.println(newServiceID.size());
@@ -584,14 +721,76 @@ public class MainPanel extends JPanel{
         sMenuItem2.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Update the Service stage");
+                ServiceProgressUpdatePanel p = new ServiceProgressUpdatePanel();
+                int click = JOptionPane.showConfirmDialog(null, p, "Update Service Progress", JOptionPane.OK_CANCEL_OPTION);
+                if(click == JOptionPane.OK_OPTION) {
+                    
+                }
                 
             }
         });
         sMenuItem3.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Update Receipt, Calculate the service Fee & mark as complete!");
+                //System.out.println("Update Receipt, Calculate the service Fee & mark as complete!");
+                String sid = serviceTable.getValueAt(serviceTable.getSelectedRow(), 0).toString();
+                JFileChooser fc = new JFileChooser();
+                int returnVal = fc.showOpenDialog(null);
+                /*if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File file = fc.getSelectedFile();
+                    try {
+                        try (PDDocument pdDoc = PDDocument.load(file)) {
+                            PDFTextStripper pdfStripper = new PDFTextStripper();
+                            String parsedText = pdfStripper.getText(pdDoc);
+                            
+                            if(parsedText.length() > 100)
+                            {
+                                int indNo = parsedText.indexOf("Registration Number:");
+                                int indName = parsedText.indexOf("Registered name:");
+                                int indDate1 = parsedText.indexOf("Effective Date of Registration:");
+                                int indDate2 = parsedText.indexOf("VAT return period end date");
+                                int indType = parsedText.indexOf("Frequency of returns:");
+                                
+                                String taxno = parsedText.substring(indNo+21,indNo+32).replaceAll("\\s+","");
+                                String regname = parsedText.substring(indName+17,indName+27);
+                                String date1_string = parsedText.substring(indDate1+32,indDate1+43);
+                                String date2_string = parsedText.substring(indDate2+29,indDate2+40);
+                                String freq = parsedText.substring(indType+22,indType+23);
+                                //if(ename.contains(regname))
+                                String conv_date1 = date1_string.substring(7) + "-" + date1_string.substring(3,6) + "-" + date1_string.substring(0,2);
+                                String conv_date2 = date2_string.substring(7) + "-" + date2_string.substring(3,6) + "-" + date2_string.substring(0,2);
+                                dao.updateTaxInfo(cid, taxno, freq, conv_date1, conv_date2);
+                                //here is for updating the view
+                                clientList.clear();
+                                dao.retrieveClients(clientList);
+                                ctm.setClientList(clientList);
+                                //System.out.println(selClientID);
+                                ctm.fireTableDataChanged();
+
+                                for(int i = 0; i<clientList.size(); i++)
+                                {
+                                    //System.out.println(clientList.get(i).getAgencyID());
+                                    if(clientList.get(i).getAgencyID().equals(selClientID))
+                                    {
+                                        clientTable.requestFocus();
+                                        clientTable.changeSelection(i,0, false,false);
+                                        break;
+                                    }
+                                }
+                                //uphere
+                            }
+                            else
+                            {
+                                JOptionPane.showMessageDialog(null,"Fail to read pdf file, maybe try manual import.");
+                            }
+                        }
+                        
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+            } else {
+                System.out.println("Cancel the selection");
+            }*/
             }
         });
         popupService.add(sMenuItem1);
@@ -641,5 +840,29 @@ public class MainPanel extends JPanel{
         this.setLayout(new BorderLayout());
         this.add(mainSplitPane, BorderLayout.CENTER);
         //this.add(cbp, BorderLayout.NORTH);
+    }
+    
+    private double calcThreeSAmount()
+    {
+        double retVal=0;    
+        if(selServiceList.size()>=3)
+        {
+            for(int i = selServiceList.size()-1; i>selServiceList.size()-4;i--)
+            {
+                retVal += selServiceList.get(i).getSalesAmount();
+            }
+        }
+        else if(selServiceList.size()>0)
+        {
+            for(int i = 0; i<selServiceList.size();i++)
+            {
+                retVal += selServiceList.get(i).getSalesAmount();
+            }
+        }
+        else
+        {
+            retVal = 0;
+        }
+        return retVal;
     }
 }
