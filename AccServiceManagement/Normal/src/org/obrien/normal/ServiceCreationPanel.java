@@ -33,7 +33,7 @@ public class ServiceCreationPanel extends JPanel implements ActionListener {
     JTextField cYearMonthBox;
     String initLetter="R";
     
-    ServiceCreationPanel()
+    ServiceCreationPanel(String selClientID)
     {
         this.setLayout(new GridLayout(5,2));
             
@@ -65,7 +65,7 @@ public class ServiceCreationPanel extends JPanel implements ActionListener {
         
         clientID = new JLabel("Client ID");
         cYearMonth = new JLabel("Service Month (Format: YYYY-MM)");
-        cClientIDBox = new JTextField("");
+        cClientIDBox = new JTextField(selClientID);
         cYearMonthBox = new JTextField("");
         
         this.add(cTaxServiceButton);

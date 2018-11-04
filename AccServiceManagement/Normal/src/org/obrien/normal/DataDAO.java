@@ -396,7 +396,7 @@ public class DataDAO {
     public void updateClientNoTax(AccountClient c) 
     {
         //Statement st = null;
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-mm-dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
         String query = "update obriensmanagement.clients set cname=?,"
                 + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?"
                 + " where agencyID= \"" + c.getAgencyID() + "\";";
@@ -430,7 +430,7 @@ public class DataDAO {
     public void updateClient(AccountClient c) 
     {
         //Statement st = null;
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-mm-dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
         String query = "update obriensmanagement.clients set cname=?,"
                 + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?, taxno=?"
                 + " where agencyID= \"" + c.getAgencyID() + "\";";
@@ -489,5 +489,46 @@ public class DataDAO {
         } catch (ParseException ex) {
             Exceptions.printStackTrace(ex);
         }
+    }
+    
+        //date1 is effective date and date 2 is first return date
+    public void CompleteTaxService(String sid, double sAmount, double vatAmount) 
+    {
+        
+        String query = "update obriensmanagement.services set saleamount=?,"
+                + " vatamount=?, progress=?"
+                + " where serviceID= \"" + sid + "\";";
+        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        try {
+            getConnection();
+            PreparedStatement st = con.prepareStatement(query);
+           
+            st.setDouble(1, sAmount);
+            st.setDouble(2, vatAmount);
+            st.setInt(3, 3);
+             
+            System.out.println(query);
+            
+            st.execute();
+            con.close();
+        } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null, "Cannot update service, please contact with the adminstrator.");
+        } 
+    }
+
+    void updateServiceProgress(String sid, int progSelection) {
+                String query = "update obriensmanagement.services set progress=?"
+                + " where serviceID= \"" + sid + "\";";
+        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        try {
+            getConnection();
+            PreparedStatement st = con.prepareStatement(query);
+            st.setInt(1, progSelection);
+                        
+            st.execute();
+            con.close();
+        } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null, "Cannot update service, please contact with the adminstrator.");
+        } 
     }
 }

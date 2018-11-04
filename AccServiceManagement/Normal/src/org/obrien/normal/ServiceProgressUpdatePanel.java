@@ -29,10 +29,11 @@ public class ServiceProgressUpdatePanel extends JPanel implements ActionListener
         bg = new ButtonGroup();
         cWaitButton = new JRadioButton("Wait reply from client");
         cWaitButton.setActionCommand("2");
+        cProgress = 2;
         cWaitButton.setSelected(true);
         cCompleteButton = new JRadioButton("Service Completion");
         cCompleteButton.setActionCommand("3");
-        cManualButton = new JRadioButton("Require action");
+        cManualButton = new JRadioButton("Require Client Action");
         cManualButton.setActionCommand("1");
         bg.add(cWaitButton);
         bg.add(cCompleteButton);
@@ -53,7 +54,7 @@ public class ServiceProgressUpdatePanel extends JPanel implements ActionListener
         cProgress = Integer.valueOf(e.getActionCommand());
     }
     
-    public int getSearchBy()
+    public int getProgSelection()
     {
         return this.cProgress;
     }
