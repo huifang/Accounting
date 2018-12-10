@@ -4,7 +4,6 @@ package org.obrien.normal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -13,7 +12,7 @@ import javax.swing.table.AbstractTableModel;
  */
 public class ServiceTableModel extends AbstractTableModel {
 
-    private ArrayList<AccountService> serviceList;
+    private final ArrayList<AccountService> serviceList;
     
     private final String[] columnNames = {
         "ServiceID",

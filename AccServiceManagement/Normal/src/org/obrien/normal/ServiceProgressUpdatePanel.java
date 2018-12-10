@@ -33,7 +33,7 @@ public class ServiceProgressUpdatePanel extends JPanel implements ActionListener
         cWaitButton.setSelected(true);
         cCompleteButton = new JRadioButton("Service Completion");
         cCompleteButton.setActionCommand("3");
-        cManualButton = new JRadioButton("Require Client Action");
+        cManualButton = new JRadioButton("Require our Action");
         cManualButton.setActionCommand("1");
         bg.add(cWaitButton);
         bg.add(cCompleteButton);

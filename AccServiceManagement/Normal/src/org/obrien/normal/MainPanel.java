@@ -10,14 +10,16 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -57,6 +59,7 @@ public class MainPanel extends JPanel{
     String selServiceID;
     
     DataDAO dao = new DataDAO("jdbc:mysql://localhost:3306","root","54321");
+    //DataDAO dao = new DataDAO("jdbc:mysql://obriensca.co.uk:3306/obriensc_management","obriensc_gina","1234567890");
     
     //members for client table
     ArrayList<AccountClient> clientList = new ArrayList<>();
@@ -106,7 +109,8 @@ public class MainPanel extends JPanel{
         dao.retrieveServices(serviceList);
         
         //build up the client table
-        //System.out.println(clientList.size());
+        System.out.println("The client list is loaded with " + clientList.size()+" clients.");
+        System.out.println("The client list is loaded with " + serviceList.size()+" services.");
         ctm = new ClientTableModel(clientList);
         clientTable = new JTable(ctm);
         clientTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -267,7 +271,7 @@ public class MainPanel extends JPanel{
                     for(int i = 0; i<clientTable.getRowCount();i++)
                     {
                         //will add English name and tax no into the table for searching later
-                        if(p.getSearchBy()==0 && p.getSearchText().equals(clientTable.getValueAt(i, 0)))
+                        if(p.getSearchBy()==0 && p.getSearchText().toLowerCase().equals(((String)clientTable.getValueAt(i, 0)).toLowerCase()))
                         {
                             //get ith row
                             clientTable.requestFocus();
@@ -354,7 +358,14 @@ public class MainPanel extends JPanel{
                                 //if(ename.contains(regname))
                                 String conv_date1 = date1_string.substring(7) + "-" + date1_string.substring(3,6) + "-" + date1_string.substring(0,2);
                                 String conv_date2 = date2_string.substring(7) + "-" + date2_string.substring(3,6) + "-" + date2_string.substring(0,2);
+                                //System.out.println(taxno);
+                                //System.out.println(freq);
+                                //System.out.println(conv_date1);
+                                //System.out.println(conv_date2);
+                                JOptionPane.showMessageDialog(null,"Inserting the tax info is \nThe taxno is "
+                                +taxno+"\nThe first return is "+conv_date1+"\nThe effective date is "+conv_date2);
                                 dao.updateTaxInfo(cid, taxno, freq, conv_date1, conv_date2);
+                                
                                 //here is for updating the view
                                 clientList.clear();
                                 dao.retrieveClients(clientList);
@@ -541,9 +552,62 @@ public class MainPanel extends JPanel{
         sCheckMail.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                MailCheckPanel mcp = new MailCheckPanel();
+                MailCheckPanel mcp = new MailCheckPanel(dao);
                 int click = JOptionPane.showConfirmDialog(null, mcp, "Check Mails", JOptionPane.OK_CANCEL_OPTION);
                 if(click == JOptionPane.OK_OPTION) {
+                    //save the related records into a file
+                    ArrayList<MessageRecord> mr = mcp.getRecords();
+                    try {
+
+                        Writer w = new OutputStreamWriter(new FileOutputStream("c:\\tmp\\mail-output.txt"),"gbk");
+                        Integer i = 1;
+                        for (MessageRecord mr1 : mr) {
+                            //String b = mr1.getSubject();    
+                           w.append(i.toString());
+                           w.append(",");
+                           w.append(mr1.getSubject());
+                           w.append(",");
+                           w.append(mr1.getRelatedServiceID());
+                           w.append("\n");
+                           i += 1; 
+                                //System.out.println(mr1.getSubject());
+                            }
+                        w.close();
+                        }catch (Exception ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                    
+                    //connect to the database and update record
+                    for (MessageRecord mr1 : mr) {
+                        String stype = mr1.getServiceType();
+                        switch(stype) {
+                        case "R"://update the service to 1
+                           dao.updateServiceProgress(mr1.getRelatedServiceID(), 1);
+                           break;
+                        case "N"://create new serivce or do nothing
+                           dao.insertNewService(mr1.getRelatedServiceID());
+                           break; 
+                        case "U"://create new change name service or do nothing
+                           dao.insertNewService(mr1.getRelatedServiceID());
+                           break;
+                        case "A"://create new change address service
+                           dao.insertNewService(mr1.getRelatedServiceID());
+                           break; 
+                        case "E"://create new eroi service
+                           dao.insertNewService(mr1.getRelatedServiceID());
+                           break; 
+                    } 
+                    }
+                    
+                    //update all the views
+                    clientTable.changeSelection(0, 0, false, false);
+                    dao.retrieveSelectedServices(selServiceList, selClientID);
+                    sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
+                    ssPanel.repaint();
+                    sstm.fireTableDataChanged();
+                } 
+                else
+                {
                     
                 }
             }
@@ -561,41 +625,96 @@ public class MainPanel extends JPanel{
                     boolean isCreate = false;
                     
                     String agencyID = p.cClientIDBox.getText();
-                    String serviceTime = p.cYearMonthBox.getText();
+                    String serviceTime = p.cYearMonthBox.getText().replace("-", "");
                     String serviceType = p.getInitLetter();
-                    
+                    String serviceLikeID; //= serviceType + serviceTime + "%" + agencyID;
+                    //System.out.println(serviceLikeID);
+                    Date createTime = new Date();
+                    int noReturn = 0;      
                     switch(serviceType) {
                         case "R":
-                        
+                           serviceLikeID = serviceType + "%" + agencyID;
+                           noReturn = dao.findNoService(serviceLikeID, createTime);
+                           //System.out.println(noReturn);
+                           if(noReturn == 0)
+                           {
+                               isCreate = true;
+                               newServiceID = serviceType + serviceTime + "01" + agencyID;
+                               System.out.println(newServiceID);
+                           }
+                           break;
                         case "N":
-                            
+                           serviceLikeID = serviceType + "%" + agencyID;
+                           noReturn = dao.findNoService(serviceLikeID, createTime);
+                           if(noReturn == 0)
+                           {
+                               isCreate = true;
+                               newServiceID = serviceType + serviceTime + "01" + agencyID;
+                           }
+                           break; 
                         case "U":
-                            
+                           serviceLikeID = serviceType + serviceTime + "%" + agencyID;
+                           noReturn = dao.findNoService(serviceLikeID, createTime);
+                           isCreate = true;
+                           newServiceID = serviceType + serviceTime + PaddingNumber(noReturn+1) + agencyID;
+                           break;
                         case "A":
-                            
+                           serviceLikeID = serviceType + serviceTime + "%" + agencyID;
+                           noReturn = dao.findNoService(serviceLikeID, createTime);
+                           isCreate = true;
+                           newServiceID = serviceType + serviceTime + PaddingNumber(noReturn+1) + agencyID;
+                           break; 
                         case "E":
-                            
+                           serviceLikeID = serviceType + serviceTime + "%" + agencyID;
+                           noReturn = dao.findNoService(serviceLikeID, createTime);
+                           isCreate = true;
+                           newServiceID = serviceType + serviceTime + PaddingNumber(noReturn+1) + agencyID;
+                           break; 
                         case "Q":
-                            
+                           serviceLikeID = serviceType + "%" + agencyID;
+                           noReturn = dao.findNoService(serviceLikeID, createTime);
+                           if(noReturn == 0)
+                           {
+                               isCreate = true;
+                               newServiceID = serviceType + serviceTime + "01" + agencyID;
+                           }
+                           break;  
                     }
                     
                     if(isCreate==true)
                     {
                         dao.insertNewService(newServiceID);
-                                        
-                        dao.retrieveServices(serviceList);
                         
-                        dao.retrieveSelectedServices(selServiceList, selClientID);
+                        //update all the views
+                        for(int i = 0;i<clientTable.getRowCount();i++)
+                        {
+                            if(clientTable.getValueAt(i, 0).equals(agencyID))
+                            {
+                                clientTable.changeSelection(i, 0, false, false);
+                                dao.retrieveSelectedServices(selServiceList, agencyID);
+                                break;
+                            }
+                        }
+  
                         sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
-                            
-                        ssPanel.repaint();         
-                
+                        ssPanel.repaint();
                         sstm.fireTableDataChanged();
+                    
+                        dao.retrieveServices(serviceList);
                         stm.fireTableDataChanged();
+                        for(int j=0; j<serviceTable.getRowCount();j++)
+                        {
+                            if(serviceTable.getValueAt(j,0).equals(newServiceID))
+                            {
+                                serviceTable.changeSelection(j, 0, false, false);
+                                break;
+                            }
+                        }
+                        JOptionPane.showMessageDialog(null,"The new service has been successfully created!");
                     }
                     else
                     {
-                        System.out.println("The input is not correct");
+                       JOptionPane.showMessageDialog(null,"The record exists or the input is not correct");
                     }
                 
                 }
@@ -628,22 +747,22 @@ public class MainPanel extends JPanel{
                     cmpMonth = cal.get(Calendar.MONTH);
                     
                     boolean createFlag;
-                    /*if(cmpMonth>curMonth)
+                    if(cmpMonth>curMonth)
                     {
                         createFlag = ((cmpMonth-curMonth) % 3 == 0);
                     }
                     else
                     {
-                        createFlag = ((curMonth-cmpMonth) % 3 == 0);
-                    }*/   
-                    if(cmpYear==curYear)
+                        createFlag = ((curMonth+12-cmpMonth) % 3 == 0);
+                    }   
+                    /*if(cmpYear==curYear)
                     {
                         createFlag = ((curMonth-cmpMonth) == 3);
                     }
                     else
                     {
                         createFlag = ((curMonth+12-cmpMonth) == 3);
-                    }
+                    }*/
                     
                     if(createFlag)
                     {
@@ -665,7 +784,6 @@ public class MainPanel extends JPanel{
                 }
                 
                 dao.insertBatchServices(newServiceID);
-                
                 
                 //after insertion, retrieve all the services into the table again.
                 dao.retrieveServices(serviceList);
@@ -689,7 +807,7 @@ public class MainPanel extends JPanel{
                 UnCompleteServicePanel p = new UnCompleteServicePanel(unServices);
                 try {
                     //now save uncomplete services to a file
-                    PrintWriter pw = new PrintWriter(new File("C:\\temp\\uncompletion.csv"));
+                    PrintWriter pw = new PrintWriter(new File("C:\\tmp\\uncompletion.csv"));
                     for(int i = 0; i < unServices.size(); i++)
                     {
                         StringBuilder sb = new StringBuilder();
@@ -711,11 +829,11 @@ public class MainPanel extends JPanel{
             }
         });
          //service table right button
-        JMenuItem sMenuItem1 = new JMenuItem("Calculate SaleAmount from file");
+        //JMenuItem sMenuItem1 = new JMenuItem("Calculate SaleAmount from file");
         JMenuItem sMenuItem2 = new JMenuItem("Update Service Progress");
         //this button is for updating the pdf receipt and lable as complete
         JMenuItem sMenuItem3 = new JMenuItem("Update Receipt Pdf");
-        sMenuItem1.addActionListener(new ActionListener(){
+        /*sMenuItem1.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
                 //popup file selection dialog and read tax no, return type and first return date
@@ -729,7 +847,7 @@ public class MainPanel extends JPanel{
                 System.out.println("Cancel the selection");
             }
             }
-        });
+        });*/
         sMenuItem2.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -751,14 +869,30 @@ public class MainPanel extends JPanel{
                     {
                         //System.out.println(p.getProgSelection());
                         dao.updateServiceProgress(sid, p.getProgSelection());
-                   
+                        
+                        if(p.getProgSelection()==3)
+                        {
+                            dao.UpdateLatestReturn(sid);
+                            JOptionPane.showMessageDialog(null,"You have successfully completed the service and the service is closed.");
+                        }
+                        
                         dao.retrieveServices(serviceList);
                         dao.retrieveSelectedServices(selServiceList, selClientID);
                         sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
                         ssPanel.repaint();         
                         sPanel.repaint();
-                        //sstm.fireTableDataChanged();
-                        //stm.fireTableDataChanged();
+                        sstm.fireTableDataChanged();
+                        stm.fireTableDataChanged();
+                        
+                        //focus on serviceid
+                        for(int j=0; j<serviceTable.getRowCount();j++)
+                        {
+                            if(serviceTable.getValueAt(j,0).equals(sid))
+                            {
+                                serviceTable.changeSelection(j, 0, false, false);
+                                break;
+                            }
+                        }
                     }
                 }
                 
@@ -796,7 +930,11 @@ public class MainPanel extends JPanel{
                                 //System.out.println(sAmount);
                                 //if(ename.contains(regname))
                                 //dao.updateTaxInfo(cid, taxno, freq, conv_date1, conv_date2);
+                                JOptionPane.showMessageDialog(null,"Inserting the tax info for completing the service: \nThe client is "
+                                +sid+"\nThe sales amount is "+sAmount+"\nThe VAT amount is "+vatAmount);
                                 dao.CompleteTaxService(sid, sAmount, vatAmount); 
+                                dao.UpdateLatestReturn(sid);
+                                
                                 //refresh the table                               
                                 dao.retrieveServices(serviceList);
                                 dao.retrieveSelectedServices(selServiceList, selClientID);
@@ -806,6 +944,15 @@ public class MainPanel extends JPanel{
 
                                 sstm.fireTableDataChanged();
                                 stm.fireTableDataChanged();
+                                 //update all the views
+                                for(int j=0; j<serviceTable.getRowCount();j++)
+                                {
+                                    if(serviceTable.getValueAt(j,0).equals(sid))
+                                    {
+                                        serviceTable.changeSelection(j, 0, false, false);
+                                        break;
+                                    }
+                                }
                             }
                             else
                             {
@@ -821,7 +968,7 @@ public class MainPanel extends JPanel{
             }
             }
         });
-        popupService.add(sMenuItem1);
+        //popupService.add(sMenuItem1);
         popupService.add(sMenuItem2);
         popupService.add(sMenuItem3);
         
@@ -872,10 +1019,11 @@ public class MainPanel extends JPanel{
     
     private double calcThreeSAmount()
     {
+        //we still get 4 record cuz the current one is set to 0 at the stage
         double retVal=0;    
-        if(selServiceList.size()>=3)
+        if(selServiceList.size()>=4)
         {
-            for(int i = selServiceList.size()-1; i>selServiceList.size()-4;i--)
+            for(int i = selServiceList.size()-1; i>selServiceList.size()-5;i--)
             {
                 retVal += selServiceList.get(i).getSalesAmount();
             }
@@ -892,5 +1040,17 @@ public class MainPanel extends JPanel{
             retVal = 0;
         }
         return retVal;
+    }
+        
+    String PaddingNumber(int no)
+    {
+        if(no<10)
+        {
+            return "0"+String.valueOf(no);
+        }
+        else
+        {
+            return String.valueOf(no);
+        }
     }
 }

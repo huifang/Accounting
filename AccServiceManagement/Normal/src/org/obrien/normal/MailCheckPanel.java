@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.mail.Store;
+import javax.mail.internet.MimeUtility;
 import javax.mail.search.AndTerm;
 import javax.mail.search.ComparisonTerm;
 import javax.mail.search.ReceivedDateTerm;
@@ -36,6 +38,7 @@ import org.openide.util.Exceptions;
  */
 class MailCheckPanel extends JPanel implements ActionListener {
     
+    DataDAO dao;
     JPanel mailPanel;
     
     JLabel emailLabel;
@@ -62,10 +65,12 @@ class MailCheckPanel extends JPanel implements ActionListener {
     int noTax = 0;
     int noCName = 0;
     int noCAddress = 0;
+    int noEORI = 0;
     int noOthers = 0;
     
-    MailCheckPanel()
+    MailCheckPanel(DataDAO dao)
     {
+        this.dao = dao;
         mailPanel = new JPanel();
 
         emailLabel = new JLabel("Email Address:");
@@ -115,6 +120,7 @@ class MailCheckPanel extends JPanel implements ActionListener {
         noTax = 0;
         noCName = 0;
         noCAddress = 0;
+        noEORI = 0;
         noOthers = 0;
          
         try {
@@ -135,7 +141,7 @@ class MailCheckPanel extends JPanel implements ActionListener {
             properties.setProperty(
                   String.format("mail.%s.socketFactory.port", "imap"),
                   String.valueOf("993"));
-            
+            //properties.put("mail.mime.decodetext.strict","false");
             Session emailSession = Session.getDefaultInstance(properties);
 
             //get filtered date parsed
@@ -145,13 +151,12 @@ class MailCheckPanel extends JPanel implements ActionListener {
             Date futureDate = convertToDate(dateTo, "23:59:59");
                         
             Store store = emailSession.getStore("imap");
-            
             store.connect(emailBox.getText(), passwordBox.getText());
 
                 //create the folder object and open it
             Folder emailFolder = store.getFolder("INBOX");
             emailFolder.open(Folder.READ_ONLY);
-            
+       
             SearchTerm olderThan = new ReceivedDateTerm(ComparisonTerm.LT, futureDate);
             SearchTerm newerThan = new ReceivedDateTerm(ComparisonTerm.GT, pastDate);
             SearchTerm andTerm = new AndTerm(olderThan, newerThan);
@@ -167,10 +172,11 @@ class MailCheckPanel extends JPanel implements ActionListener {
             area.append("Regular Tax communication: " + noTax + "\n");
             area.append("Change Name Service: " + noCName + "\n");
             area.append("Change Address Service: " + noCAddress + "\n");
+            area.append("EROI Service: " + noEORI + "\n");
             area.append("Other Unannotated Service: " + noOthers + "\n");
             //System.out.println("messages.length---" + messages.length);
-            /*
-            for (int i = 0, n = messages.length; i < n; i++) {
+            
+            /*for (int i = 0, n = messages.length; i < n; i++) {
                 Message message = messages[i];
                 System.out.println("---------------------------------");
                 System.out.println("Email Number " + (i + 1));
@@ -194,7 +200,7 @@ class MailCheckPanel extends JPanel implements ActionListener {
                ex.printStackTrace();
         }
     }
-      
+    
     Date convertToDate(String dateString, String time)
     {
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
@@ -239,6 +245,8 @@ class MailCheckPanel extends JPanel implements ActionListener {
         MessageRecord tmpRecord;
         
         for (int i = 0, n = messages.length; i < n; i++) {
+            String tmpServiceID;
+            String requestLikeID;
             Message message = messages[i];
             try {
                subject = message.getSubject();
@@ -252,29 +260,84 @@ class MailCheckPanel extends JPanel implements ActionListener {
                while (endInd < subject.length() && Character.isDigit(subject.charAt(endInd))) endInd++;
                String id = subject.substring(startInd, endInd);
                
+               //now decide to which agency it belongs
+               if(startInd<3)
+               {
+                   //agency is missing so use the default
+                   tmpRecord.setClientID("USA"+id);
+               }
+               else if ((!Character.isLetter(subject.charAt(startInd-3)))
+                       ||(!Character.isLetter(subject.charAt(startInd-2)))
+                       ||(!Character.isLetter(subject.charAt(startInd-1))))
+               {
+                   //any of the 3 charaters before it is not letter, use default
+                   tmpRecord.setClientID("USA"+id);
+               }
+               else
+               {
+                   tmpRecord.setClientID(subject.substring(startInd-3,startInd)+id);
+               }
+               //System.out.println(tmpRecord.getClientID());
+               
                if(subject.contains("注册"))
                {
                     //new registration
                     tmpRecord.setServiceType("N");
+                    tmpServiceID = "N" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + "01" + tmpRecord.getClientID();
+                    tmpRecord.setRelatedServiceID(tmpServiceID);
+                    records.add(tmpRecord);
                     noReg++;
                }
-               else if(subject.contains("第")&&subject.contains("次"))
+               else if(subject.contains("申报"))
                {
                     tmpRecord.setServiceType("R");
+                    requestLikeID = "R" + "%" + tmpRecord.getClientID();
+                    //System.out.println(requestLikeID);
+                    tmpServiceID = dao.findServiceID(requestLikeID);
+                    //System.out.println(tmpServiceID);
+                    tmpRecord.setRelatedServiceID(tmpServiceID);
+                    records.add(tmpRecord);
                     noTax++;
                }
                else if(subject.contains("改")&&subject.contains("名"))
                {
-                    noCName++;
+                   tmpRecord.setServiceType("U");
+                   requestLikeID = "U" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + "%" + tmpRecord.getClientID();
+                   
+                   int index = dao.findNoService(requestLikeID, receiveTime);
+                   tmpServiceID = "U" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + PaddingMonth(index+1) + tmpRecord.getClientID();
+                   tmpRecord.setRelatedServiceID(tmpServiceID);
+                   records.add(tmpRecord);
+                   noCName++;
                }
-               else if(subject.contains("改地址"))
+               else if(subject.contains("改地址")||subject.contains("转地址"))
                {
-                    noCAddress++;
+                   tmpRecord.setServiceType("A");
+                   requestLikeID = "A" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + "%" + tmpRecord.getClientID();
+                   int index = dao.findNoService(requestLikeID, receiveTime);
+                   
+                   tmpServiceID = "A" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + PaddingMonth(index+1) + tmpRecord.getClientID();
+                   tmpRecord.setRelatedServiceID(tmpServiceID);
+                   records.add(tmpRecord);
+                   noCAddress++;
+               }
+               else if(subject.toLowerCase().contains("eori"))
+               {
+                   tmpRecord.setServiceType("E");
+                   requestLikeID = "E" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + "%" + tmpRecord.getClientID();
+                   int index = dao.findNoService(requestLikeID, receiveTime);
+                   
+                   tmpServiceID = "E" + String.valueOf(receiveTime.getYear()+1900) + String.valueOf(PaddingMonth(receiveTime.getMonth())) + PaddingMonth(index+1) + tmpRecord.getClientID();
+                   tmpRecord.setRelatedServiceID(tmpServiceID);
+                   records.add(tmpRecord);
+                   noEORI++;
                }
                else
                {
                    noOthers++;
+                   records.add(tmpRecord);
                }
+               //System.out.println(tmpRecord.getRelatedServiceID());
                
             } catch (MessagingException ex) {
                 Exceptions.printStackTrace(ex);
@@ -282,6 +345,23 @@ class MailCheckPanel extends JPanel implements ActionListener {
             
         }
         
+    }
+    
+    public ArrayList<MessageRecord> getRecords()
+    {
+        return records;
+    }
+    
+    String PaddingMonth(int month)
+    {
+        if(month<10)
+        {
+            return "0"+String.valueOf(month);
+        }
+        else
+        {
+            return String.valueOf(month);
+        }
     }
     
 }

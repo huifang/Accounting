@@ -50,6 +50,8 @@ public class DataDAO {
         ResultSet rs = null;
         String query = "SELECT agencyID, cname, email, taxno, ename "
                 + "from obriensmanagement.clients;";
+        //String query = "SELECT agencyID, cname, email, taxno, ename "
+        //        + "from obriensc_management.clients;";
         
         try {
             getConnection();
@@ -88,6 +90,8 @@ public class DataDAO {
         ResultSet rs = null;
         String query = "SELECT agencyID, cname, ename, address, repname, repdob, email, contactno,taxno "
                 + "from obriensmanagement.clients where agencyID =\"" + cid + "\";";
+        //String query = "SELECT agencyID, cname, ename, address, repname, repdob, email, contactno,taxno "
+        //        + "from obriensc_management.clients where agencyID =\"" + cid + "\";";
         SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
         
         try {
@@ -133,6 +137,8 @@ public class DataDAO {
         ResultSet rs = null;
         String query = "SELECT agencyID, latestreturn "
                 + "from obriensmanagement.clients;";
+        //String query = "SELECT agencyID, latestreturn "
+        //        + "from obriensc_management.clients;";
         
         try {
             getConnection();
@@ -160,6 +166,7 @@ public class DataDAO {
         Statement st;
         ResultSet rs;
         String query = "SELECT serviceID from obriensmanagement.services;";
+        //String query = "SELECT serviceID from obriensc_management.services;";
         
         try {
             getConnection();
@@ -181,8 +188,13 @@ public class DataDAO {
     {
         Statement st = null;
         ResultSet rs = null;
+        //String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
+        //        + "from obriensmanagement.services;";
         String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
                 + "from obriensmanagement.services;";
+        
+        //String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
+        //        + "from obriensc_management.services;";
         
         try {
             getConnection();
@@ -217,6 +229,9 @@ public class DataDAO {
         ResultSet rs = null;
         String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
                 + "from obriensmanagement.services where services.clientID = \"" + clientID +"\";";
+        //String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
+        //        + "from obriensc_management.services where services.clientID = \"" + clientID +"\";";
+        
         //System.out.println(query);
         serviceList.clear();
         
@@ -254,7 +269,9 @@ public class DataDAO {
         ResultSet rs = null;
         String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
                 + "from obriensmanagement.services where services.progress != 3 and services.progress != 4;";
-
+        //String query = "SELECT serviceID, clientID, periodEnd, rtype, saleamount, vatamount, servicefee, paidamount, progress "
+        //        + "from obriensc_management.services where services.progress != 3 and services.progress != 4;";
+        
         serviceList.clear();
         
         try {
@@ -285,14 +302,76 @@ public class DataDAO {
         }
     }
         
+    public String findSingleService(String request)
+    {
+        String query = "select serviceID from obriensmanagement.services where serviceID like " + request;
+        return "Not implemented";
+    }
+    
+    
+    public String findServiceID(String requestLikeID) {
+        String retID="";
+        
+        String query = "select serviceID from obriensmanagement.services where serviceID like \"" + requestLikeID + "\" order by periodEnd DESC LIMIT 1;";
+        
+        //String query = "select serviceID from obriensc_management.services where serviceID like " + requestLikeID + "order by periodEnd DESC LIMIT 1;";
+                       
+        try {
+            getConnection();
+            PreparedStatement st = con.prepareStatement(query);
+            //st.setDate(1, sqlDate);
+        
+            ResultSet rs = st.executeQuery(query);
+            
+            if(rs.next()) {
+                retID = rs.getString(1);
+            }
+            
+            con.close();
+        } catch (SQLException ex) {
+            //JOptionPane.showMessageDialog(null,"Cannot retrieve any relevant services from the database...");
+        }
+        
+        return retID;
+    }
+    
+    public int findNoService(String request, Date receiveDate)
+    {
+        int noService = 0;
+        //SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+        java.sql.Date sqlDate = new java.sql.Date(receiveDate.getTime());
+        String query = "select count(*) from obriensmanagement.services where serviceID like \"" + request + "\" and (createtime <> ? || createtime is null)";
+        //String query = "select count(*) from obriensc_management.services where serviceID like \"" + request + "\" and (createtime <> ? || createtime is null)";
+                
+        try {
+            getConnection();
+            PreparedStatement st = con.prepareStatement(query);
+            //st.setDate(1, sqlDate);
+        
+            ResultSet rs = st.executeQuery(query);
+            
+            if(rs.next()) {
+                noService = rs.getInt(1);
+            }
+            
+            con.close();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null,"Cannot insert client due to some inputs are not correct");
+        }
+        
+        return noService;
+    }
+    
     //here is for insert
     public void insertNewClient(AccountClient c) 
     {
         //Statement st = null;
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-mm-dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
         String query = "insert into obriensmanagement.clients(agencyID, cname, ename,"
                 + "address,repname,repdob,regdate,contactno,email) values(?,?,?,?,?,?,?,?,?);";
-        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        //String query = "insert into obriensc_management.clients(agencyID, cname, ename,"
+        //        + "address,repname,repdob,regdate,contactno,email) values(?,?,?,?,?,?,?,?,?);";
+        
         java.util.Date d =null;
         try {
             d = sdf1.parse(c.getRepDOB());
@@ -324,7 +403,9 @@ public class DataDAO {
 
     void insertNewService(String newServiceID) {
         
-        String query = "insert into obriensmanagement.services(serviceID, clientID, periodEnd, progress) values(?,?,?,?);";   
+        String query = "insert into obriensmanagement.services(serviceID, clientID, periodEnd, progress, createtime) values(?,?,?,?,?);";   
+        //String query = "insert into obriensc_management.services(serviceID, clientID, periodEnd, progress, createtime) values(?,?,?,?,?);";   
+        
         SimpleDateFormat sdf1 = new SimpleDateFormat("MM-yyyy");
         try {
             getConnection();
@@ -341,7 +422,7 @@ public class DataDAO {
             st.setString(2,clientID);
             st.setDate(3,sqlDate);
             st.setInt(4, 0);
-            
+            st.setDate(5, new java.sql.Date((new java.util.Date()).getTime()));
             st.execute();
             con.close();
         } catch (SQLException ex) {
@@ -354,6 +435,8 @@ public class DataDAO {
     void insertBatchServices(ArrayList<String> newServiceID) {
         
         String query = "insert into obriensmanagement.services(serviceID, clientID, periodEnd, progress) values(?,?,?,?);";   
+        //String query = "insert into obriensc_management.services(serviceID, clientID, periodEnd, progress) values(?,?,?,?);";   
+        
         SimpleDateFormat sdf1 = new SimpleDateFormat("MM-yyyy");
         try {
             getConnection();
@@ -400,6 +483,9 @@ public class DataDAO {
         String query = "update obriensmanagement.clients set cname=?,"
                 + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?"
                 + " where agencyID= \"" + c.getAgencyID() + "\";";
+        //String query = "update obriensc_management.clients set cname=?,"
+        //        + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?"
+        //        + " where agencyID= \"" + c.getAgencyID() + "\";";
         //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
         java.util.Date d =null;
         try {
@@ -434,7 +520,10 @@ public class DataDAO {
         String query = "update obriensmanagement.clients set cname=?,"
                 + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?, taxno=?"
                 + " where agencyID= \"" + c.getAgencyID() + "\";";
-        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        //String query = "update obriensc_management.clients set cname=?,"
+        //        + " ename=?, address=?, repname = ?, repdob=?, contactno=?,email=?, taxno=?"
+        //        + " where agencyID= \"" + c.getAgencyID() + "\";";
+      
         java.util.Date d =null;
         try {
             d = sdf1.parse(c.getRepDOB());
@@ -470,7 +559,10 @@ public class DataDAO {
         String query = "update obriensmanagement.clients set taxno=?,"
                 + " periodtype=?, effectivedate=?, firstreturn=?"
                 + " where agencyID= \"" + cid + "\";";
-        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        //String query = "update obriensc_management.clients set taxno=?,"
+        //        + " periodtype=?, effectivedate=?, firstreturn=?"
+        //        + " where agencyID= \"" + cid + "\";";
+ 
         try {
             getConnection();
             PreparedStatement st = con.prepareStatement(query);
@@ -498,7 +590,9 @@ public class DataDAO {
         String query = "update obriensmanagement.services set saleamount=?,"
                 + " vatamount=?, progress=?"
                 + " where serviceID= \"" + sid + "\";";
-        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        //String query = "update obriensc_management.services set saleamount=?,"
+        //        + " vatamount=?, progress=?"
+        //        + " where serviceID= \"" + sid + "\";";     
         try {
             getConnection();
             PreparedStatement st = con.prepareStatement(query);
@@ -515,11 +609,38 @@ public class DataDAO {
                  JOptionPane.showMessageDialog(null, "Cannot update service, please contact with the adminstrator.");
         } 
     }
+    
+    public void UpdateLatestReturn(String sid) 
+    {
+        String cid = sid.substring(9,sid.length());
+        System.out.println(cid);
+        String date = sid.substring(1,5) + "-" + sid.substring(5,7) + "-" + sid.substring(7,9);
+        System.out.println(date);
+        String query = "update obriensmanagement.clients set latestreturn=\"" + date + "\" where agencyID= \"" + cid + "\";";
+        //String query = "update obriensc_management.services set saleamount=?,"
+        //        + " vatamount=?, progress=?"
+        //        + " where serviceID= \"" + sid + "\";";     
+        try {
+            getConnection();
+            PreparedStatement st = con.prepareStatement(query);
+           
 
+            System.out.println(query);
+            
+            st.execute();
+            con.close();
+        } catch (SQLException ex) {
+                 JOptionPane.showMessageDialog(null, "Cannot update service, please contact with the adminstrator.");
+        } 
+    }
+    
     void updateServiceProgress(String sid, int progSelection) {
-                String query = "update obriensmanagement.services set progress=?"
+        
+        String query = "update obriensmanagement.services set progress=?"
                 + " where serviceID= \"" + sid + "\";";
-        //  String query = "insert into obriensmanagement.clients(agencyID, cname) values(?,?);";      
+        //String query = "update obriensc_management.services set progress=?"
+        //        + " where serviceID= \"" + sid + "\";";
+        
         try {
             getConnection();
             PreparedStatement st = con.prepareStatement(query);

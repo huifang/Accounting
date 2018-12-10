@@ -23,6 +23,8 @@ public class MessageRecord {
     {
         this.subject = subject;
         this.receiveTime = receiveTime;
+        this.relatedserviceID = " ";
+        this.serviceType =" ";
     }
     
     public void setClientID(String cID)
@@ -65,4 +67,9 @@ public class MessageRecord {
         return this.getReceiveTime();
     }
     
+    @Override
+    public String toString()
+    {
+        return this.getSubject() + ", " + this.getRelatedServiceID() + ", " + this.getClientID();
+    }
 }
