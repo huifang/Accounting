@@ -154,24 +154,24 @@ public class MainPanel extends JPanel{
                     //HSSFCell cell;
                     //cell = sheet.getRow(1).getCell(1);
                     if(sheet.getRow(1).getCell(1)!=null)
-                        agencyID = sheet.getRow(1).getCell(1).getStringCellValue();
+                        agencyID = sheet.getRow(1).getCell(1).getRichStringCellValue().getString();   
                     if(sheet.getRow(2).getCell(1)!=null)
-                        ccName = sheet.getRow(2).getCell(1).getStringCellValue();
+                        ccName = sheet.getRow(2).getCell(1).getRichStringCellValue().getString();
                     if(sheet.getRow(2).getCell(2)!=null)
-                        ecName = sheet.getRow(2).getCell(2).getStringCellValue(); 
+                        ecName = sheet.getRow(2).getCell(2).getRichStringCellValue().getString(); 
                     if(sheet.getRow(3).getCell(2)!=null)
-                        address= sheet.getRow(2).getCell(2).getStringCellValue();
+                        address= sheet.getRow(3).getCell(2).getRichStringCellValue().getString();
                     if(sheet.getRow(4).getCell(1)!=null)
-                        repName= sheet.getRow(4).getCell(1).getStringCellValue();
+                        repName= sheet.getRow(4).getCell(1).getRichStringCellValue().getString();
                     if(sheet.getRow(5).getCell(1)!=null)
                     {
                         dob = sheet.getRow(5).getCell(1).getDateCellValue();
                         dobstring = sf.format(dob);
                     }
                     if(sheet.getRow(9).getCell(1)!=null)
-                        tel= sheet.getRow(9).getCell(1).getStringCellValue();
+                        tel= sheet.getRow(9).getCell(1).getRichStringCellValue().getString();
                     if(sheet.getRow(11).getCell(1)!=null)
-                        email= sheet.getRow(11).getCell(1).getStringCellValue();
+                        email= sheet.getRow(11).getCell(1).getRichStringCellValue().getString();
                     
                     //if get cliend id and cname
                     if(agencyID != null && ccName != null)
@@ -183,7 +183,7 @@ public class MainPanel extends JPanel{
                         c.setRepName(repName);
                         c.setRepDob(dobstring);
                         c.setContactNo(tel);
-
+                        
                         dao.insertNewClient(c);
                         clientList.clear();
                         dao.retrieveClients(clientList);
@@ -605,6 +605,12 @@ public class MainPanel extends JPanel{
                     sAmountLabel.setText(String.valueOf(calcThreeSAmount()));
                     ssPanel.repaint();
                     sstm.fireTableDataChanged();
+                    
+                    dao.retrieveServices(serviceList);
+                    stm = new ServiceTableModel(serviceList);
+                    serviceTable.setModel(stm);
+                    //stm.fireTableDataChanged();
+                    //sPanel.repaint();
                 } 
                 else
                 {
@@ -728,7 +734,7 @@ public class MainPanel extends JPanel{
                 ArrayList<String> serviceIDAll = new ArrayList<>();
                 ArrayList<String> newServiceID = new ArrayList<>();
                 
-                dao.retrieveLatestReturnDate(serviceMonth);
+                dao.retrieveFirstReturnDate(serviceMonth);
                 dao.retrieveAllServiceID(serviceIDAll);
                 
                 int curYear = Calendar.getInstance().get(Calendar.YEAR);
@@ -912,7 +918,7 @@ public class MainPanel extends JPanel{
                             PDFTextStripper pdfStripper = new PDFTextStripper();
                             String parsedText = pdfStripper.getText(pdDoc);
                             
-                            //System.out.println(parsedText.length());
+                            System.out.println(parsedText.length());
                             if(parsedText.length() > 100)
                             {
                                 int indNo = parsedText.indexOf("Registration Number:");
